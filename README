@@ -1,0 +1,19 @@
+rd - privilege elevator
+=======================
+rd is a privilege elevation tool. It takes in the root password each time it is
+run and will reject an incorrect login attempt or run a command.
+
+Requirements
+------------
+In order to build rd, you need the crypt header file. rd is build for the Linux
+model of group and password storage; it will not work on other types of systems.
+
+Installation
+------------
+Edit config.mk to match your local setup.
+
+Afterwards, enter the following command to build and install rd (if necessary,
+as root):
+
+    make clean install
+

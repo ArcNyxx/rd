@@ -1,0 +1,28 @@
+.TH RD 1 rd\-VERSION
+.SH NAME
+rd \- privilege elevator
+.SH SYNOPSIS
+.SY rd
+.I command
+.YS
+.SH DESCRIPTION
+.BR rd (1)
+is a privilege elevation tool which works with the Linux model of group and
+password storage (see
+.BR passwd (5)
+and
+.BR shadow "(5)). "
+.BR rd (1)
+takes in the root password each time it is run and will reject an incorrect
+login attempt or run
+.IR command .
+.SH EXIT STATUS
+.BR rd (1)
+returns with the exit status of
+.I command
+on success or with 1 on failure.
+.SH AUTHOR
+Written by FearlessDoggo21.
+.SH SEE ALSO
+.BR sudo "(1), " su "(1), " doas "(1), " passwd "(5), " shadow "(3), "
+.BR crypt (3)
