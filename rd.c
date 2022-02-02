@@ -97,7 +97,7 @@ main(int argc, char **argv)
 		const char *passwd = readpw();
 		char *hash = crypt(passwd, salt);
 		if (strcmp(hash, sp->sp_pwdp))
-			die("rd: invalid password\n");
+			die("rd: incorrect password\n");
 	}
 
 	if (setgid(pw->pw_gid) == -1)
