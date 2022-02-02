@@ -58,7 +58,7 @@ readpw(void)
 			die("\nrd: unable to allocate memory");
 		update = passwd + length;
 	}
-	if (ret == -1)
+	if (ret == (size_t)-1)
 		die("\nrd: unable to read from stdin");
 	passwd[length + ret - 1] = '\0';
 
