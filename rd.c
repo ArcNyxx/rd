@@ -78,16 +78,24 @@ main(int argc, char **argv)
 	if ((pw = getpwnam("root")) == NULL)
 		die("rd: unable to get passwd file entry");
 
+	/* get hashed passwd from /etc/passwd or /etc/shadow */
+	const char *hash_cmp;
 	if (pw->pw_passwd[0] == '!') {
 		die("rd: password is locked\n");
 	} else if (!strcmp(pw->pw_passwd, "x")) {
 		struct spwd *sp;
 		if ((sp = getspnam("root")) == NULL)
 			die("rd: unable to get shadow file entry");
+		hash_cmp = sp->sp_pwdp;
+	} else {
+		hash_cmp = pw->pw_passwd;
+	}
 
+	/* if passwd exists (no free login) */
+	if (hash_cmp[0] != '\0') {
 		/* get the salt from the entry */
 		char *salt, *ptr;
-		if ((salt = strdup(sp->sp_pwdp)) == NULL)
+		if ((salt = strdup(hash_cmp)) == NULL)
 			die("rd: unable to allocate memory");
 		ptr = strchr(salt + 1, '$');
 		ptr = strchr(ptr + 1, '$');
@@ -96,7 +104,7 @@ main(int argc, char **argv)
 		/* hash and compare the read passwd to the shadow entry */
 		const char *passwd = readpw();
 		char *hash = crypt(passwd, salt);
-		if (strcmp(hash, sp->sp_pwdp))
+		if (strcmp(hash, hash_cmp))
 			die("rd: incorrect password\n");
 	}
 

@@ -35,7 +35,7 @@ install: all
 	chown root:wheel $(DESTDIR)$(PREFIX)/bin/rd
 	chmod 4754 $(DESTDIR)$(PREFIX)/bin/rd
 	mkdir -p $(DESTDIR)$(MANPREFIX)/man1
-	cp -f rd.1 $(DESTDIR)$(MANPREFIX)/man1
+	sed 's/VERSION/$(VERSION)/g' < rd.1 > $(DESTDIR)$(MANPREFIX)/man1/rd.1
 	chmod 644 $(DESTDIR)$(MANPREFIX)/man1/rd.1
 
 uninstall:
