@@ -41,30 +41,29 @@ readpw(void)
 	fflush(stdout);
 
 	/* termios to not echo typed chars (hide passwd) */
-	struct termios origin, changed;
-	if (tcgetattr(STDIN_FILENO, &origin) == -1)
+	struct termios term;
+	if (tcgetattr(STDIN_FILENO, &term) == -1)
 		die("\nrd: unable to get terminal attributes");
-	memcpy(&changed, &origin, sizeof(struct termios));
 
-	changed.c_lflag &= ~ECHO;
-	if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &changed) == -1)
+	term.c_lflag &= ~ECHO;
+	if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &term) == -1)
 		die("\nrd: unable to set terminal attributes");
 
 	/* read loop with buffer reallocation for long passwds */
 	size_t length = 0, ret;
-	char *passwd = malloc(50), *update = passwd;
-	while ((ret = read(STDIN_FILENO, update, 50)) == 50) {
+	char *passwd = malloc(50);
+	while ((ret = read(STDIN_FILENO, passwd + length, 50)) == 50) {
 		if ((passwd = realloc(passwd, (length += ret) + 50)) == NULL)
 			die("\nrd: unable to allocate memory");
-		update = passwd + length;
 	}
 	if (ret == (size_t)-1)
 		die("\nrd: unable to read from stdin");
 	passwd[length + ret - 1] = '\0';
 
-	if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &origin) == -1)
+	term.c_lflag |= ECHO;
+	if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &term) == -1)
 		die("\nrd: unable to set terminal attributes");
-	printf("\n");
+	putchar('\n');
 	return passwd;
 }
 
