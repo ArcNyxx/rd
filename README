@@ -1,19 +1,82 @@
 rd - privilege elevator
 =======================
-rd is a privilege elevation tool. It takes in the root password each time it is
-run and will reject an incorrect login attempt or run a command.
+rd is a simple privilege elevator requiring the fewest number of dependencies.
+rd provides a secure method to permit system privilege elecation, only
+permitting users of a specific group (defaulting to the wheel group) to execute
+the program, and only executing the privileged command after verifying the
+inputted root password by default.  rd stores no state, thus the root password
+must be re-entered upon each execution.
 
 Requirements
 ------------
-In order to build rd, you need the crypt header file. rd is build for the Linux
-model of group and password storage; it will not work on other types of systems.
+rd requires libcrypt to build if the root password is to be read each
+execution.  rd is designed to function on systems with the same password
+storage model as Linux (with the /etc/passwd and /etc/shadow files present).
 
 Installation
 ------------
-Edit config.mk to match your local setup.
+Install the dependencies of rd.  Edit config.mk to match your local setup.
+Root privilieges are required to install rd.
 
-Afterwards, enter the following command to build and install rd (if necessary,
-as root):
+rd is installed into the /usr/local namespace by default.  To configure this,
+such as to install into the /usr namespace, edit config.mk in the following
+manner:
 
-    make clean install
+    - PREFIX = /usr/local
+    + PREFIX = /usr
+
+rd requires the root password to be inputted each time it is executed by
+default.  To configure this, edit config.mk in the following manner:
+
+    - CFLAGS = $(WPROFILE) $(STD) -Os -std=c11
+    + CFLAGS = $(WPROFILE) $(STD) -DNO_PASSWD -Os -std=c11
+
+rd is installed in such a way to enable only users of a specific group to
+execute rd.  This is done to aid with user control, and defaults to permitting
+members of the wheel group to execute rd.  To configure this, such as to permit
+any user to execute rd, edit config.mk in the following manner:
+
+    - GROUP = wheel
+    + GROUP = users
+
+To install rd, run the following command:
+
+    rd make clean install
+
+To entirely uninstall rd, including both executables and documentation pages,
+run the following command:
+
+    rd make uninstall
+
+
+Usage
+-----
+rd is invoked via the command line and takes a command to execute upon success
+as an argument.  Success is determined by a number of security checks passing.
+The first check ensures that rd is executed with root privileges.  The second
+optional check determines whether an inputted password matches that of the root
+user.
+
+rd is designed, built, and installed in a safe manner by default.  rd is owned
+by the root user and a specifically configurable group (defaulting to the wheel
+group). The setuid bit is set for the execution of the installed rd, allowing
+any user of the configured group to run rd with root privilege, thus satisfying
+the first check.  The optional second check compares an inputted password to
+the /etc/password or /etc/shadow entry for the root user.  Finally, the program
+is run.
+
+Configuration
+-------------
+rd is designed to be simple; editing the source code or build instructions to
+modify the privilege elevation procedure is encouraged if the modification is
+educated (it is dangerous to edit a tool which can elevate user privileges).
+
+Configuring the group which is able to execute commands and whether the root
+password is required for execution can be configured by editing the applicable
+variables in config.mk.  See the installation section for more details.
+
+Pull requests, issues or bug reports, and branches are always welcome!  The
+main development branch of rd can be found at the following address:
+
+    https://github.com/fearlessdoggo21/rd
 

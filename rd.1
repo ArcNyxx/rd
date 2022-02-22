@@ -1,3 +1,6 @@
+.\" rd - privilege elevator
+.\" Copyright (C) 2022 ArcNyxx
+.\" see LICENCE file for licensing information
 .TH RD 1 rd\-VERSION
 .SH NAME
 rd \- privilege elevator
@@ -7,14 +10,11 @@ rd \- privilege elevator
 .YS
 .SH DESCRIPTION
 .BR rd (1)
-is a privilege elevation tool which works with the Linux model of group and
-password storage (see
-.BR passwd (5)
-and
-.BR shadow "(5)). "
+is a simple privilege elevation tool.
 .BR rd (1)
-takes in the root password each time it is run and will reject an incorrect
-login attempt or run
+allows only users of the GROUP group to execute it and will optionally check
+whether an inputted password matches the root password.  Following successful
+checks, it will run
 .IR command .
 .SH EXIT STATUS
 .BR rd (1)
@@ -22,7 +22,7 @@ returns with the exit status of
 .I command
 on success or with 1 on failure.
 .SH AUTHOR
-Written by FearlessDoggo21.
+Written by ArcNyxx.
 .SH SEE ALSO
 .BR sudo "(1), " su "(1), " doas "(1), " passwd "(5), " shadow "(3), "
 .BR crypt (3)

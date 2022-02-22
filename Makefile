@@ -1,5 +1,5 @@
 # rd - privilege elevator
-# Copyright (C) 2022 FearlessDoggo21
+# Copyright (C) 2022 ArcNyxx
 # see LICENCE file for licensing information
 
 .POSIX:
@@ -32,10 +32,11 @@ dist: clean
 install: all
 	mkdir -p $(DESTDIR)$(PREFIX)/bin
 	cp -f rd $(DESTDIR)$(PREFIX)/bin
-	chown root:wheel $(DESTDIR)$(PREFIX)/bin/rd
+	chown root:$(GROUP) $(DESTDIR)$(PREFIX)/bin/rd
 	chmod 4754 $(DESTDIR)$(PREFIX)/bin/rd
 	mkdir -p $(DESTDIR)$(MANPREFIX)/man1
-	sed 's/VERSION/$(VERSION)/g' < rd.1 > $(DESTDIR)$(MANPREFIX)/man1/rd.1
+	cat rd.1 | sed 's/VERSION/$(VERSION)/g' | sed 's/GROUP/$(GROUP)/g' > \
+		$(DESTDIR)$(MANPREFIX)/man1/rd.1
 	chmod 644 $(DESTDIR)$(MANPREFIX)/man1/rd.1
 
 uninstall:

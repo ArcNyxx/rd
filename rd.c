@@ -1,23 +1,26 @@
 /* rd - privilege elevator
- * Copyright (C) 2022 FearlessDoggo21
+ * Copyright (C) 2022 ArcNyxx
  * see LICENCE file for licensing information */
 
-#include <crypt.h>
 #include <errno.h>
-#include <grp.h>
 #include <pwd.h>
-#include <shadow.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdnoreturn.h>
 #include <string.h>
-#include <sys/types.h>
-#include <termios.h>
+#include <stdnoreturn.h>
 #include <unistd.h>
 
+#ifndef NO_PASSWD
+#include <crypt.h>
+#include <shadow.h>
+#include <termios.h>
+#endif /* NO_PASSWD */
+
 noreturn static void die(const char *fmt, ...);
+#ifndef NO_PASSWD
 static char *readpw(void);
+#endif /* NO_PASSWD */
 
 noreturn static void
 die(const char *fmt, ...)
@@ -34,6 +37,7 @@ die(const char *fmt, ...)
 	exit(1);
 }
 
+#ifndef NO_PASSWD
 static char *
 readpw(void)
 {
@@ -65,6 +69,7 @@ readpw(void)
 	putchar('\n');
 	return passwd;
 }
+#endif /* NO_PASSWD */
 
 int
 main(int argc, char **argv)
@@ -76,6 +81,7 @@ main(int argc, char **argv)
 	if ((pw = getpwnam("root")) == NULL)
 		die("rd: unable to get passwd file entry");
 
+#ifndef NO_PASSWD
 	/* get hashed passwd from /etc/passwd or /etc/shadow */
 	const char *hash;
 	if (pw->pw_passwd[0] == '!') {
@@ -103,6 +109,7 @@ main(int argc, char **argv)
 		if (strcmp(hash, crypt(readpw(), salt)))
 			die("rd: incorrect password\n");
 	}
+#endif /* NO_PASSWD */
 
 	if (setgid(pw->pw_gid) == -1)
 		die("rd: unable to set group id");
