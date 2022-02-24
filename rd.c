@@ -3,7 +3,8 @@
  * see LICENCE file for licensing information */
 
 #include <errno.h>
-#include <pwd.h> #include <stdarg.h>
+#include <pwd.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdnoreturn.h>
