@@ -37,7 +37,7 @@ install: all
 	mkdir -p $(DESTDIR)$(MANPREFIX)/man1
 	cat rd.1 | sed 's/VERSION/$(VERSION)/g' | sed 's/GROUP/$(GROUP)/g' | \
 		sed 's/RTCONF/$(RTCONF)/g' | sed 's/CLEARENV/$(CLEARENV)/g' | \
-		sed 's/USERMOD/$(USERMOD)/g'> $(DESTDIR)$(MANPREFIX)/man1/rd.1
+		sed 's/USERMOD/$(USERMOD)/g' > $(DESTDIR)$(MANPREFIX)/man1/rd.1
 	chmod 644 $(DESTDIR)$(MANPREFIX)/man1/rd.1
 
 uninstall:
