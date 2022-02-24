@@ -122,6 +122,8 @@ skip:
 	setenv("LOGNAME", pw->pw_name, 1);
 	setenv("PATH", "/usr/local/bin:/usr/bin:/usr/sbin", 1);
 
+	if (argv[1] == NULL)
+		die("rd: no program given\n");
 	execvp(argv[1], &argv[1]);
 	die("rd: unable to run %s: %s\n", argv[1], strerror(errno));
 }
