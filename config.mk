@@ -8,8 +8,8 @@ PREFIX = /usr/local
 MANPREFIX = $(PREFIX)/share/man
 
 RTCONF = not installed
-CLEARENV = installed
-USERMOD = not installed
+CLEARENV = not installed
+USERMOD = installed
 
 GROUP = wheel
 
