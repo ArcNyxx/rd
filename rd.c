@@ -75,7 +75,6 @@ main(int argc, char **argv)
 {
 	bool state = argc > 1 && argv[1][0] == '-' && 
 			strchr(argv[1], 'c') != NULL;
-	argv = &argv[1 + state];
 
 	if (getuid() != 0 && geteuid() != 0)
 		die("rd: insufficient privileges\n");
@@ -128,6 +127,6 @@ main(int argc, char **argv)
 	setenv("LOGNAME", pw->pw_name, 1);
 	setenv("PATH", "/usr/local/bin:/usr/bin:/usr/sbin", 1);
 
-	execvp(argv[0], argv);
-	die("rd: unable to run %s: %s\n", argv[0], strerror(errno));
+	execvp(argv[1 + state], &argv[1 + state]);
+	die("rd: unable to run %s: %s\n", argv[1 + state], strerror(errno));
 }
