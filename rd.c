@@ -72,11 +72,10 @@ readpw(void)
 int
 main(int argc, char **argv)
 {
-	int add = 0;
-	char *user = "root";
+	const char *user = "root";
 	if (argc > 2 && argv[1][0] == '-' && strchr(argv[1], 'u') != NULL) {
 		user = argv[2];
-		add = 2;
+		argv = &argv[2];
 	}
 
 	if (getuid() != 0 && geteuid() != 0)
@@ -122,10 +121,9 @@ main(int argc, char **argv)
 	setenv("SHELL", pw->pw_shell[0] != '\0' ? pw->pw_shell : "/bin/sh", 1);
 	setenv("USER", pw->pw_name, 1);
 	setenv("LOGNAME", pw->pw_name, 1);
-	setenv("PATH", "/usr/local/bin:/usr/bin:/usr/sbin", 1);
 
 	if (argv[1] == NULL)
 		die("rd: no program given\n");
-	execvp(argv[1 + add], &argv[1 + add]);
-	die("rd: unable to run %s: %s\n", argv[1 + add], strerror(errno));
+	execvp(argv[1], &argv[1]);
+	die("rd: unable to run %s: %s\n", argv[1], strerror(errno));
 }
