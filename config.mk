@@ -9,7 +9,7 @@ MANPREFIX = $(PREFIX)/share/man
 
 RTCONF = installed
 CLEARENV = installed
-USERMOD = not installed
+USERMOD = installed
 
 GROUP = wheel
 
