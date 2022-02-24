@@ -72,11 +72,12 @@ readpw(void)
 int
 main(int argc, char **argv)
 {
+	int add = 0;
 	char *user = "root";
-	if (argc > 2 && argv[1][0] == '-' && strchr(argv[1], 'u') != NULL)
+	if (argc > 2 && argv[1][0] == '-' && strchr(argv[1], 'u') != NULL) {
 		user = argv[2];
-
-	argv = &argv[1 + (strchr(argv[1], 'u') != NULL) * 2];
+		add = 2;
+	}
 
 	if (getuid() != 0 && geteuid() != 0)
 		die("rd: insufficient privileges\n");
@@ -125,6 +126,6 @@ main(int argc, char **argv)
 
 	if (argv[1] == NULL)
 		die("rd: no program given\n");
-	execvp(argv[1], &argv[1]);
-	die("rd: unable to run %s: %s\n", argv[1], strerror(errno));
+	execvp(argv[1 + add], &argv[1 + add]);
+	die("rd: unable to run %s: %s\n", argv[1 + add], strerror(errno));
 }
