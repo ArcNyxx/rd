@@ -3,8 +3,7 @@
  * see LICENCE file for licensing information */
 
 #include <errno.h>
-#include <pwd.h>
-#include <stdarg.h>
+#include <pwd.h> #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdnoreturn.h>
@@ -76,7 +75,7 @@ main(int argc, char **argv)
 		die("rd: insufficient privileges\n");
 
 	struct passwd *pw;
-	if ((pw = getpwnam(user)) == NULL)
+	if ((pw = getpwnam("root")) == NULL)
 		die("rd: unable to get passwd file entry");
 
 #ifndef NO_PASSWD
@@ -85,7 +84,7 @@ main(int argc, char **argv)
 		die("rd: password is locked\n");
 	} else if (!strcmp(pw->pw_passwd, "x")) {
 		struct spwd *sp;
-		if ((sp = getspnam(user)) == NULL)
+		if ((sp = getspnam("root")) == NULL)
 			die("rd: unable to get shadow file entry");
 		pw->pw_passwd = sp->sp_pwdp;
 	}
