@@ -115,7 +115,6 @@ main(int argc, char **argv)
 	setenv("SHELL", pw->pw_shell[0] != '\0' ? pw->pw_shell : "/bin/sh", 1);
 	setenv("USER", pw->pw_name, 1);
 	setenv("LOGNAME", pw->pw_name, 1);
-	setenv("PATH", "/usr/local/bin:/usr/bin:/usr/sbin", 1);
 
 	if (argv[1] == NULL)
 		die("rd: no program given\n");
