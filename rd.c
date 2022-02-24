@@ -116,8 +116,11 @@ main(int argc, char **argv)
 
 	if (state) {
 		const char *term = getenv("TERM");
+		const char *path = getenv("PATH");
+
 		clearenv();
 		setenv("TERM", term, 1);
+		setenv("PATH", path, 1);
 	}
 
 	setenv("HOME", pw->pw_dir, 1);
