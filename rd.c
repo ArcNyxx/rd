@@ -73,15 +73,17 @@ readpw(void)
 int
 main(int argc, char **argv)
 {
-	bool state = argc > 1 && argv[1][0] == '-' && 
-			strchr(argv[1], 'c') != NULL;
-	argv = &argv[1 + state];
+	static const char *user = "root";
+
+	if (argc > 2 && argv[1][0] == '-' && strchr(argv[1], 'u') != NULL)
+		user = argv[2];
+	argv = &argv[1 + (strchr(argv[1], 'u') != NULL) * 2];
 
 	if (getuid() != 0 && geteuid() != 0)
 		die("rd: insufficient privileges\n");
 
 	struct passwd *pw;
-	if ((pw = getpwnam("root")) == NULL)
+	if ((pw = getpwnam(user)) == NULL)
 		die("rd: unable to get passwd file entry");
 
 #ifndef NO_PASSWD
@@ -90,7 +92,7 @@ main(int argc, char **argv)
 		die("rd: password is locked\n");
 	} else if (!strcmp(pw->pw_passwd, "x")) {
 		struct spwd *sp;
-		if ((sp = getspnam("root")) == NULL)
+		if ((sp = getspnam(user)) == NULL)
 			die("rd: unable to get shadow file entry");
 		pw->pw_passwd = sp->sp_pwdp;
 	}
@@ -115,12 +117,6 @@ main(int argc, char **argv)
 		die("rd: unable to set group id");
 	if (setuid(pw->pw_uid) == -1)
 		die("rd: unable to set user id");
-
-	if (state) {
-		const char *term = getenv("TERM");
-		clearenv();
-		setenv("TERM", term, 1);
-	}
 
 	setenv("HOME", pw->pw_dir, 1);
 	setenv("SHELL", pw->pw_shell[0] != '\0' ? pw->pw_shell : "/bin/sh", 1);
