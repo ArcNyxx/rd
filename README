@@ -18,6 +18,12 @@ Installation
 Install the dependencies of rd.  Edit config.mk to match your local setup.
 Root privilieges are required to install rd.
 
+rd provides multiple .diff files which contain code to change program
+functionality.  See the Configuration section for details on each diff
+provided.  These files can be merged into rd by running the following command:
+
+    git apply [diff]
+
 rd is installed into the /usr/local namespace by default.  To configure this,
 such as to install into the /usr namespace, edit config.mk in the following
 manner:
@@ -71,9 +77,20 @@ rd is designed to be simple; editing the source code or build instructions to
 modify the privilege elevation procedure is encouraged if the modification is
 educated (it is dangerous to edit a tool which can elevate user privileges).
 
+rd holds a few variables, mainly in diffs, which are easy and useful to change.
+
 Configuring the group which is able to execute commands and whether the root
 password is required for execution can be configured by editing the applicable
 variables in config.mk.  See the installation section for more details.
+
+rd provides multiple .diff files which contain code to change program
+functionality.  Each diff adds a unique functionality, and they are made to be
+easy to merge together with as few conflicts as possible.  A list of the
+provided diffs follows:
+
+    rtconf:   runtime configuration, create /etc/rd to not use a passwd
+    clearenv: optionally clear environment variables before running the command
+    chuser:   optionally change to a user other than root
 
 Pull requests, issues or bug reports, and branches are always welcome!  The
 main development branch of rd can be found at the following address:
