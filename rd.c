@@ -7,8 +7,8 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <stdnoreturn.h>
+#include <string.h>
 #include <unistd.h>
 
 #ifndef NO_PASSWD
@@ -72,67 +72,20 @@ readpw(void)
 int
 main(int argc, char **argv)
 {
-	static const char *user = "root";
-
 	if (getuid() != 0 && geteuid() != 0)
 		die("rd: insufficient privileges\n");
 
-#if defined(STATE) || defined(USRMOD)
-	char inc = 1;
-
-#ifdef STATE
-	bool state = false;
-	if (argc > 1 && argv[1][0] == '-' && strchr(argv[1], 'c') != NULL) {
-		state = true;
-		inc = 2;
-	}
-#endif
-
-#ifdef USRMOD
-	if (argc > 2 && argv[1][0] == '-' && strchr(argv[1], 'u') != NULL) {
-		user = argv[2];
-		inc = 3;
-	}
-#endif
-
-	argv = &argv[inc];
-#endif
-
-#if defined(USRMOD)
-	if (argc == 1 || argv[0][0] != '-')
-		goto skip;
-
-#ifdef USRMOD
-	if (strchr(argv[0], 'u') != NULL) {
-		if (argc < 2)
-			die("rd: -u option must be followed by user\n");
-		user = argv[1];
-		argv = &argv[1];
-	}
-#endif /* USRMOD */
-skip:
-	argv = &argv[1];
-
-#else
-	argv = &argv[1];
-#endif /* USRMOD */
-
 	struct passwd *pw;
-	if ((pw = getpwnam(user)) == NULL)
+	if ((pw = getpwnam("root")) == NULL)
 		die("rd: unable to get passwd file entry");
 
 #ifndef NO_PASSWD
-#ifdef RT_PASSWD
-	if (access("/etc/rd", F_OK) == 0)
-		goto skip
-#endif /* RT_PASSWD */
-
 	/* get hashed passwd from /etc/passwd or /etc/shadow */
 	if (pw->pw_passwd[0] == '!' || pw->pw_passwd[0] == '*') {
 		die("rd: password is locked\n");
 	} else if (!strcmp(pw->pw_passwd, "x")) {
 		struct spwd *sp;
-		if ((sp = getspnam(user)) == NULL)
+		if ((sp = getspnam("root")) == NULL)
 			die("rd: unable to get shadow file entry");
 		pw->pw_passwd = sp->sp_pwdp;
 	}
@@ -151,26 +104,14 @@ skip:
 		if (strcmp(pw->pw_passwd, crypt(readpw(), salt)))
 			die("rd: incorrect password\n");
 	}
-
-#ifdef RT_PASSWD
-skip:
-#endif /* RT_PASSWD */
 #endif /* NO_PASSWD */
 
-//	if (initgroups(user, pw->pw_gid) < 0)
-//		die("rd: unable to set groups");
+	if (initgroups("root", pw->pw_gid) < 0)
+		die("rd: unable to set groups");
 	if (setgid(pw->pw_gid) == -1)
 		die("rd: unable to set group id");
 	if (setuid(pw->pw_uid) == -1)
 		die("rd: unable to set user id");
-
-#ifdef STATE
-	if (state) {
-		char *term = getenv("TERM");
-		clearenv();
-		setenv("TERM", term, 1);
-	}
-#endif /* STATE */
 
 	setenv("HOME", pw->pw_dir, 1);
 	setenv("SHELL", pw->pw_shell[0] != '\0' ? pw->pw_shell : "/bin/sh", 1);
@@ -178,6 +119,6 @@ skip:
 	setenv("LOGNAME", pw->pw_name, 1);
 	setenv("PATH", "/usr/local/bin:/usr/bin:/usr/sbin", 1);
 
-	execvp(argv[0], argv);
+	execvp(argv[1], argv);
 	die("rd: unable to run %s: %s\n", argv[1], strerror(errno));
 }
