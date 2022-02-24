@@ -106,6 +106,8 @@ main(int argc, char **argv)
 	}
 #endif /* NO_PASSWD */
 
+	if (initgroups("root", pw->pw_gid) == -1)
+		die("rd: unable to set groups");
 	if (setgid(pw->pw_gid) == -1)
 		die("rd: unable to set group id");
 	if (setuid(pw->pw_uid) == -1)
