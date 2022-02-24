@@ -5,6 +5,7 @@
 #include <errno.h>
 #include <pwd.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdnoreturn.h>
@@ -72,6 +73,10 @@ readpw(void)
 int
 main(int argc, char **argv)
 {
+	bool state = argc > 1 && argv[1][0] == '-' && 
+			strchr(argv[1], 'c') != NULL;
+	argv = &argv[1 + state];
+
 	if (getuid() != 0 && geteuid() != 0)
 		die("rd: insufficient privileges\n");
 
@@ -111,12 +116,18 @@ main(int argc, char **argv)
 	if (setuid(pw->pw_uid) == -1)
 		die("rd: unable to set user id");
 
+	if (state) {
+		const char *term = getenv("TERM");
+		clearenv();
+		setenv("TERM", term, 1);
+	}
+
 	setenv("HOME", pw->pw_dir, 1);
 	setenv("SHELL", pw->pw_shell[0] != '\0' ? pw->pw_shell : "/bin/sh", 1);
 	setenv("USER", pw->pw_name, 1);
 	setenv("LOGNAME", pw->pw_name, 1);
 	setenv("PATH", "/usr/local/bin:/usr/bin:/usr/sbin", 1);
 
-	execvp(argv[1], &argv[1]);
-	die("rd: unable to run %s: %s\n", argv[1], strerror(errno));
+	execvp(argv[0], argv);
+	die("rd: unable to run %s: %s\n", argv[0], strerror(errno));
 }
