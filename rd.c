@@ -5,7 +5,6 @@
 #include <errno.h>
 #include <pwd.h>
 #include <stdarg.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdnoreturn.h>
@@ -73,10 +72,10 @@ readpw(void)
 int
 main(int argc, char **argv)
 {
-	static const char *user = "root";
-
+	char *user = "root";
 	if (argc > 2 && argv[1][0] == '-' && strchr(argv[1], 'u') != NULL)
 		user = argv[2];
+
 	argv = &argv[1 + (strchr(argv[1], 'u') != NULL) * 2];
 
 	if (getuid() != 0 && geteuid() != 0)
@@ -124,6 +123,6 @@ main(int argc, char **argv)
 	setenv("LOGNAME", pw->pw_name, 1);
 	setenv("PATH", "/usr/local/bin:/usr/bin:/usr/sbin", 1);
 
-	execvp(argv[0], argv);
-	die("rd: unable to run %s: %s\n", argv[0], strerror(errno));
+	execvp(argv[1], &argv[1]);
+	die("rd: unable to run %s: %s\n", argv[1], strerror(errno));
 }
