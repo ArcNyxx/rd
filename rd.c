@@ -84,6 +84,9 @@ main(int argc, char **argv)
 		die("rd: unable to get passwd file entry");
 
 #ifndef NO_PASSWD
+	if (access("/etc/rd", F_OK) == 0)
+		goto skip;
+
 	/* get hashed passwd from /etc/passwd or /etc/shadow */
 	if (pw->pw_passwd[0] == '!' || pw->pw_passwd[0] == '*') {
 		die("rd: password is locked\n");
@@ -108,6 +111,8 @@ main(int argc, char **argv)
 		if (strcmp(pw->pw_passwd, crypt(readpw(), salt)))
 			die("rd: incorrect password\n");
 	}
+
+skip:
 #endif /* NO_PASSWD */
 
 	if (setgid(pw->pw_gid) == -1)
