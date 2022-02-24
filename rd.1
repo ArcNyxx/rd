@@ -8,6 +8,11 @@ rd \- privilege elevator
 .SY rd
 .I command
 .YS
+.
+.SY rd
+.OP \-s
+.OP \-u user
+.YS
 .SH DESCRIPTION
 .BR rd (1)
 is a simple privilege elevation tool.
@@ -20,7 +25,7 @@ checks, it will run
 .BR rd (1)
 returns with the exit status of
 .I command
-on success or with 1 on failure.
+on success or with 127 on failure.
 .SH AUTHOR
 Written by ArcNyxx.
 .SH SEE ALSO
