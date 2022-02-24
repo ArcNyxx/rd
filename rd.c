@@ -73,7 +73,7 @@ readpw(void)
 int
 main(int argc, char **argv)
 {
-	bool state = argc > 1 && argv[1][0] == '-' && 
+	bool state = argc > 1 && argv[1][0] == '-' &&
 			strchr(argv[1], 'c') != NULL;
 
 	if (getuid() != 0 && geteuid() != 0)
