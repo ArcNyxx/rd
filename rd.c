@@ -74,6 +74,7 @@ main(int argc, char **argv)
 {
 	int state = argc > 1 && argv[1][0] == '-' &&
 			strchr(argv[1], 'c') != NULL;
+	argv = &argv[state];
 
 	if (getuid() != 0 && geteuid() != 0)
 		die("rd: insufficient privileges\n");
@@ -128,8 +129,8 @@ main(int argc, char **argv)
 	setenv("USER", pw->pw_name, 1);
 	setenv("LOGNAME", pw->pw_name, 1);
 
-	if (argv[1 + state] == NULL)
+	if (argv[1] == NULL)
 		die("rd: no program given\n");
-	execvp(argv[1 + state], &argv[1 + state]);
-	die("rd: unable to run %s: %s\n", argv[1 + state], strerror(errno));
+	execvp(argv[1], &argv[1]);
+	die("rd: unable to run %s: %s\n", argv[1], strerror(errno));
 }
