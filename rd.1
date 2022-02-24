@@ -6,21 +6,38 @@
 rd \- privilege elevator
 .SH SYNOPSIS
 .SY rd
-.I command
-.YS
-.
-.SY rd
-.OP \-s
+.OP \-c
 .OP \-u user
+.I command
 .YS
 .SH DESCRIPTION
 .BR rd (1)
 is a simple privilege elevation tool.
 .BR rd (1)
-allows only users of the GROUP group to execute it and will optionally check
-whether an inputted password matches the root password.  Following successful
-checks, it will run
+only allows users in the GROUP group to execute commands as different users.
+After verifying authorisation, some environment variables are reset and
+.I command
+is run.
+.PP
+.BR rd (1)
+provides multiple patches designed to increase program functionality.
+.SS rtconf (RTCONF)
+Allow the password requirement, if not already disabled by building with
+.IR -DNO_PASSWD ,
+to be disabled by creating
+.IR /etc/rd .
+.SS clearenv (CLEARENV)
+Allow the
+.I -c
+option to clear environment variables before running
 .IR command .
+.SS usermod (USERMOD)
+Allow the
+.I -u
+option followed by
+.I user
+to execute commands as that user.  The default user remains
+.IR root .
 .SH EXIT STATUS
 .BR rd (1)
 returns with the exit status of
