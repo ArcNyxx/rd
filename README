@@ -1,46 +1,49 @@
 rd - privilege elevator
 =======================
-rd is a simple privilege elevator requiring the fewest number of dependencies.
-rd provides a secure method to permit system privilege elecation, only
-permitting users of a specific group (defaulting to the wheel group) to execute
-the program, and only executing the privileged command after verifying the
-inputted root password by default.  rd stores no state, thus the root password
-must be re-entered upon each execution.
+rd is a simple privilege elevator requiring a single dependency.  rd provides a
+secure method to elevate or change privilege across a system, only permitting
+users of a specific group (default wheel) to execute the program.  rd
+optionally verifies an inputted password before executing the provided command.
+rd stores no state; a password must be re-entered each time it is required.
 
 Requirements
 ------------
-rd requires libcrypt to build if the root password is to be read each
-execution.  rd is designed to function on systems with the same password
-storage model as Linux (with the /etc/passwd and /etc/shadow files present).
+rd requires libcrypt to verify passwords.  If this feature is disabled,
+libcrypt is no longer required.  rd is designed to function on systems with the
+same passwd/shadow storage model as Linux (requires getpwnam and getspnam
+functions).
 
 Installation
 ------------
-Install the dependencies of rd.  Edit config.mk to match your local setup.
-Root privilieges are required to install rd.
+Install libcrypt if building without the -DNO_PASSWD option (which disables
+all password verification).  Edit config.mk to match your local setup.  Root
+privileges are required to install rd.
 
-rd provides multiple .diff files which contain code to change program
-functionality.  See the Configuration section for details on each diff
-provided.  These files can be merged into rd by running the following command:
+rd provides multiple patches designed to increase program functionality.  These
+are stored in .diff files in the diff/ folder in the project root directory.
+Conflicts may occur when combining diffs; be prepared to edit source code.  To
+apply a diff to rd, run the following command:
 
     git apply [diff]
 
-rd is installed into the /usr/local namespace by default.  To configure this,
-such as to install into the /usr namespace, edit config.mk in the following
-manner:
+rd is installed into the /usr/local namespace by default.  To change this, such
+as to install into the /usr namespace, edit config.mk in the following manner:
 
     - PREFIX = /usr/local
     + PREFIX = /usr
 
-rd requires the root password to be inputted each time it is executed by
-default.  To configure this, edit config.mk in the following manner:
+rd, by default, verifies a user's password each time it is run.  The rtconf
+patch is useful for occasionally disabling this requirement, however to build
+rd without this check, edit config.mk in the following manner:
 
     - CFLAGS = $(WPROFILE) $(STD) -Os -std=c11
     + CFLAGS = $(WPROFILE) $(STD) -DNO_PASSWD -Os -std=c11
 
-rd is installed in such a way to enable only users of a specific group to
-execute rd.  This is done to aid with user control, and defaults to permitting
-members of the wheel group to execute rd.  To configure this, such as to permit
-any user to execute rd, edit config.mk in the following manner:
+rd is installed to enable only users of a specific group to execute it to
+ensure not everyone can execute commands as a different user, despite knowing
+their password.  The privileged group defaults to the wheel group; to change
+this, such as to allow any user to run rd, edit config.mk in the following
+manner:
 
     - GROUP = wheel
     + GROUP = users
@@ -55,45 +58,22 @@ run the following command:
     rd make uninstall
 
 
-Usage
------
-rd is invoked via the command line and takes a command to execute upon success
-as an argument.  Success is determined by a number of security checks passing.
-The first check ensures that rd is executed with root privileges.  The second
-optional check determines whether an inputted password matches that of the root
-user.
-
-rd is designed, built, and installed in a safe manner by default.  rd is owned
-by the root user and a specifically configurable group (defaulting to the wheel
-group). The setuid bit is set for the execution of the installed rd, allowing
-any user of the configured group to run rd with root privilege, thus satisfying
-the first check.  The optional second check compares an inputted password to
-the /etc/password or /etc/shadow entry for the root user.  Finally, the program
-is run.
-
 Configuration
 -------------
-rd is designed to be simple; editing the source code or build instructions to
-modify the privilege elevation procedure is encouraged if the modification is
-educated (it is dangerous to edit a tool which can elevate user privileges).
+rd is designed to be simple.  Editing the source code or build instructions to
+modify the privilege elevation procedure is encouraged, yet cautioned as such a
+modification may open a security hole.
 
-rd holds a few variables, mainly in diffs, which are easy and useful to change.
+rd provides multiple patches, the following is a list of these patches and
+their functionalities.
 
-Configuring the group which is able to execute commands and whether the root
-password is required for execution can be configured by editing the applicable
-variables in config.mk.  See the installation section for more details.
-
-rd provides multiple .diff files which contain code to change program
-functionality.  Each diff adds a unique functionality, and they are made to be
-easy to merge together with as few conflicts as possible.  A list of the
-provided diffs follows:
-
-    rtconf:   runtime configuration, create /etc/rd to not use a passwd
+    rtconf:   create /etc/rd to not use a passwd
     clearenv: optionally clear environment variables before running the command
-    chuser:   optionally change to a user other than root
+    usermod:  optionally change to a user other than root
+    all:      a combination of all above patches
 
 Pull requests, issues or bug reports, and branches are always welcome!  The
-main development branch of rd can be found at the following address:
+main development branch of rd can be found at the following web address:
 
     https://github.com/fearlessdoggo21/rd
 
