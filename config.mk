@@ -7,9 +7,9 @@ VERSION = 1.0.0
 PREFIX = /usr/local
 MANPREFIX = $(PREFIX)/share/man
 
-RTCONF = installed
-CLEARENV = installed
-USERMOD = installed
+RTCONF = not installed
+CLEARENV = not installed
+USERMOD = not installed
 
 GROUP = wheel
 
