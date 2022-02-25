@@ -1,0 +1,44 @@
+diff --git a/config.mk b/config.mk
+index 6720375..17ad030 100644
+--- a/config.mk
++++ b/config.mk
+@@ -8,7 +8,7 @@ PREFIX = /usr/local
+ MANPREFIX = $(PREFIX)/share/man
+ 
+ RTCONF = not installed
+-CLEARENV = not installed
++CLEARENV = installed
+ USERMOD = not installed
+ 
+ GROUP = wheel
+diff --git a/rd.c b/rd.c
+index c472c9a..cfa582e 100644
+--- a/rd.c
++++ b/rd.c
+@@ -73,6 +73,10 @@ readpw(void)
+ int
+ main(int argc, char **argv)
+ {
++	int state = argc > 1 && argv[1][0] == '-' &&
++			strchr(argv[1], 'c') != NULL;
++	argv = &argv[state];
++
+ 	if (getuid() != 0 && geteuid() != 0)
+ 		die("rd: insufficient privileges\n");
+ 
+@@ -114,6 +118,15 @@ main(int argc, char **argv)
+ 	if (setuid(pw->pw_uid) == -1)
+ 		die("rd: unable to set user id");
+ 
++	if (state) {
++		const char *term = getenv("TERM");
++		const char *path = getenv("PATH");
++
++		clearenv();
++		setenv("TERM", term, 1);
++		setenv("PATH", path, 1);
++	}
++
+ 	setenv("HOME", pw->pw_dir, 1);
+ 	setenv("SHELL", pw->pw_shell[0] != '\0' ? pw->pw_shell : "/bin/sh", 1);
+ 	setenv("USER", pw->pw_name, 1);

@@ -1,0 +1,84 @@
+diff --git a/config.mk b/config.mk
+index 6720375..d2af9f0 100644
+--- a/config.mk
++++ b/config.mk
+@@ -7,9 +7,9 @@ VERSION = 1.0.0
+ PREFIX = /usr/local
+ MANPREFIX = $(PREFIX)/share/man
+ 
+-RTCONF = not installed
+-CLEARENV = not installed
+-USERMOD = not installed
++RTCONF = installed
++CLEARENV = installed
++USERMOD = installed
+ 
+ GROUP = wheel
+ 
+diff --git a/rd.c b/rd.c
+index c472c9a..4306e8e 100644
+--- a/rd.c
++++ b/rd.c
+@@ -73,20 +73,32 @@ readpw(void)
+ int
+ main(int argc, char **argv)
+ {
++	const char *user = "root";
++	int state = argc > 1 && argv[1][0] == '-' &&
++			strchr(argv[1], 'c') != NULL;
++	if (argc > 2 && argv[1][0] == '-' && strchr(argv[1], 'u') != NULL) {
++		user = argv[2];
++		state = 2;
++	}
++	argv = &argv[state];
++
+ 	if (getuid() != 0 && geteuid() != 0)
+ 		die("rd: insufficient privileges\n");
+ 
+ 	struct passwd *pw;
+-	if ((pw = getpwnam("root")) == NULL)
++	if ((pw = getpwnam(user)) == NULL)
+ 		die("rd: unable to get passwd file entry");
+ 
+ #ifndef NO_PASSWD
++	if (access("/etc/rd", F_OK) == 0)
++		goto skip;
++
+ 	/* get hashed passwd from /etc/passwd or /etc/shadow */
+ 	if (pw->pw_passwd[0] == '!' || pw->pw_passwd[0] == '*') {
+ 		die("rd: password is locked\n");
+ 	} else if (!strcmp(pw->pw_passwd, "x")) {
+ 		struct spwd *sp;
+-		if ((sp = getspnam("root")) == NULL)
++		if ((sp = getspnam(user)) == NULL)
+ 			die("rd: unable to get shadow file entry");
+ 		pw->pw_passwd = sp->sp_pwdp;
+ 	}
+@@ -105,15 +117,26 @@ main(int argc, char **argv)
+ 		if (strcmp(pw->pw_passwd, crypt(readpw(), salt)))
+ 			die("rd: incorrect password\n");
+ 	}
++
++skip:
+ #endif /* NO_PASSWD */
+ 
+-	if (initgroups("root", pw->pw_gid) == -1)
++	if (initgroups(user, pw->pw_gid) == -1)
+ 		die("rd: unable to set groups");
+ 	if (setgid(pw->pw_gid) == -1)
+ 		die("rd: unable to set group id");
+ 	if (setuid(pw->pw_uid) == -1)
+ 		die("rd: unable to set user id");
+ 
++	if (state) {
++		const char *term = getenv("TERM");
++		const char *path = getenv("PATH");
++
++		clearenv();
++		setenv("TERM", term, 1);
++		setenv("PATH", path, 1);
++	}
++
+ 	setenv("HOME", pw->pw_dir, 1);
+ 	setenv("SHELL", pw->pw_shell[0] != '\0' ? pw->pw_shell : "/bin/sh", 1);
+ 	setenv("USER", pw->pw_name, 1);
