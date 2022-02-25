@@ -24,7 +24,7 @@ clean:
 
 dist: clean
 	mkdir -p rd-$(VERSION)
-	cp -R README LICENCE Makefile config.mk rd.1 $(SRC) rd-$(VERSION)
+	cp -R README LICENCE Makefile config.mk rd.1 $(SRC) diff rd-$(VERSION)
 	tar -cf rd-$(VERSION).tar rd-$(VERSION)
 	gzip rd-$(VERSION).tar
 	rm -rf rd-$(VERSION)
@@ -35,9 +35,9 @@ install: all
 	chown root:$(GROUP) $(DESTDIR)$(PREFIX)/bin/rd
 	chmod 4754 $(DESTDIR)$(PREFIX)/bin/rd
 	mkdir -p $(DESTDIR)$(MANPREFIX)/man1
-	cat rd.1 | sed 's/VERSION/$(VERSION)/g' | sed 's/GROUP/$(GROUP)/g' | \
-		sed 's/RTCONF/$(RTCONF)/g' | sed 's/CLEARENV/$(CLEARENV)/g' | \
-		sed 's/USERMOD/$(USERMOD)/g' > $(DESTDIR)$(MANPREFIX)/man1/rd.1
+	cat rd.1 | sed 's/VERSION/$(VERSION)/g' -e 's/GROUP/$(GROUP)/g' -e \
+		's/RTCONF/$(RTCONF)/g' -e 's/CLEARENV/$(CLEARENV)/g' -e \
+		's/USERMOD/$(USERMOD)/g' > $(DESTDIR)$(MANPREFIX)/man1/rd.1
 	chmod 644 $(DESTDIR)$(MANPREFIX)/man1/rd.1
 
 uninstall:
