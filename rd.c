@@ -122,5 +122,7 @@ main(int argc, char **argv)
 	if (argv[1] == NULL)
 		die("rd: no program given\n");
 	execvp(argv[1], &argv[1]);
-	die("rd: unable to run %s: %s\n", argv[1], strerror(errno));
+	if (errno == ENOENT)
+		die("rd: unable to run %s: no such command\n", argv[1]);
+	die("rd: unable to run %s\n", argv[1]);
 }
