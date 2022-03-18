@@ -72,6 +72,9 @@ their functionalities.
     usermod:  optionally change to a user other than root
     all:      a combination of all above patches
 
+
+Bug Reporting
+-------------
 Pull requests, issues or bug reports, and branches are always welcome!  The
 main development branch of rd can be found at the following web address:
 
