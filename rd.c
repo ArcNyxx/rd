@@ -42,7 +42,7 @@ die(const char *fmt, ...)
 static char *
 readpw(void)
 {
-	write(STDOUT_FILENO, "rd: enter passwd: ", 18);
+	write(STDERR_FILENO, "rd: enter passwd: ", 18);
 	/* termios to not echo typed chars (hide passwd) */
 	struct termios term;
 	if (tcgetattr(STDIN_FILENO, &term) == -1)
@@ -65,7 +65,7 @@ readpw(void)
 	term.c_lflag |= ECHO;
 	if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &term) == -1)
 		die("\nrd: unable to set terminal attributes");
-	write(STDOUT_FILENO, "\n", 1);
+	write(STDERR_FILENO, "\n", 1);
 	return passwd;
 }
 #endif /* NO_PASSWD */
