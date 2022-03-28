@@ -8,7 +8,6 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdnoreturn.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -18,12 +17,12 @@
 #include <termios.h>
 #endif /* NO_PASSWD */
 
-noreturn static void die(const char *fmt, ...);
+static void die(const char *fmt, ...);
 #ifndef NO_PASSWD
 static char *readpw(void);
 #endif /* NO_PASSWD */
 
-noreturn static void
+static void
 die(const char *fmt, ...)
 {
 	/* perror if last char not '\n' */
