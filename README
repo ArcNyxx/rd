@@ -1,82 +1,24 @@
 rd - privilege elevator
 =======================
-rd is a simple privilege elevator requiring a single dependency.  rd provides a
-secure method to elevate or change privilege across a system, only permitting
-users of a specific group (default wheel) to execute the program.  rd
-optionally verifies an inputted password before executing the provided command.
-rd stores no state; a password must be re-entered each time it is required.
+rd is a simple privilege elevator for the Linux model of password storage.
 
 Requirements
 ------------
-rd requires libcrypt to verify passwords.  If this feature is disabled,
-libcrypt is no longer required.  rd is designed to function on systems with the
-same passwd/shadow storage model as Linux (requires getpwnam and getspnam
-functions).
+rd requires libcrypt to verify passwords. If this feature is disabled, libcrypt
+is no longer required.
 
 Installation
 ------------
-Install libcrypt if building without the -DNO_PASSWD option (which disables
-all password verification).  Edit config.mk to match your local setup.  Root
-privileges are required to install rd.
+rd comes with a Makefile and config.mk file for configurable building and
+testing.  Edit the latter to match your local setup (rd is installed into the
+/usr/local namespace by default, you may need to modify your $PATH).
 
-rd provides multiple patches designed to increase program functionality.  These
-are stored in .diff files in the diff/ folder in the project root directory.
-Conflicts may occur when combining diffs; be prepared to edit source code.  To
-apply a diff to rd, run the following command:
+rd can be built and installed with the following command (run as root):
 
-    git apply [diff]
-
-rd is installed into the /usr/local namespace by default.  To change this, such
-as to install into the /usr namespace, edit config.mk in the following manner:
-
-    - PREFIX = /usr/local
-    + PREFIX = /usr
-
-rd, by default, verifies a user's password each time it is run.  The rtconf
-patch is useful for occasionally disabling this requirement, however to build
-rd without this check, edit config.mk in the following manner:
-
-    - CFLAGS = $(WPROFILE) $(STD) -Os -std=c11
-    + CFLAGS = $(WPROFILE) $(STD) -DNO_PASSWD -Os -std=c11
-
-rd is installed to enable only users of a specific group to execute it to
-ensure not everyone can execute commands as a different user, despite knowing
-their password.  The privileged group defaults to the wheel group; to change
-this, such as to allow any user to run rd, edit config.mk in the following
-manner:
-
-    - GROUP = wheel
-    + GROUP = users
-
-To install rd, run the following command:
-
-    rd make clean install
-
-To entirely uninstall rd, including both executables and documentation pages,
-run the following command:
-
-    rd make uninstall
+    make clean install
 
 
 Configuration
 -------------
-rd is designed to be simple.  Editing the source code or build instructions to
-modify the privilege elevation procedure is encouraged, yet cautioned as such a
-modification may open a security hole.
-
-rd provides multiple patches, the following is a list of these patches and
-their functionalities.
-
-    rtconf:   create /etc/rd to not use a passwd
-    clearenv: optionally clear environment variables before running the command
-    usermod:  optionally change to a user other than root
-    all:      a combination of all above patches
-
-
-Bug Reporting
--------------
-Pull requests, issues or bug reports, and branches are always welcome!  The
-main development branch of rd can be found at the following web address:
-
-    https://github.com/arcnyxx/rd
-
+rd can be configured by directly editing rd.c and (re)compiling the source
+code.  This keeps it fast, simple, and secure.

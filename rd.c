@@ -72,20 +72,32 @@ readpw(void)
 int
 main(int argc, char **argv)
 {
+	const char *user = "root";
+	int state = argc > 1 && argv[1][0] == '-' &&
+			strchr(argv[1], 'c') != NULL;
+	if (argc > 2 && argv[1][0] == '-' && strchr(argv[1], 'u') != NULL) {
+		user = argv[2];
+		state = 2;
+	}
+	argv = &argv[state];
+
 	if (getuid() != 0 && geteuid() != 0)
 		die("rd: insufficient privileges\n");
 
 	struct passwd *pw;
-	if ((pw = getpwnam("root")) == NULL)
+	if ((pw = getpwnam(user)) == NULL)
 		die("rd: unable to get passwd file entry");
 
 #ifndef NO_PASSWD
+	if (access("/etc/rd", F_OK) == 0)
+		goto skip;
+
 	/* get hashed passwd from /etc/passwd or /etc/shadow */
 	if (pw->pw_passwd[0] == '!' || pw->pw_passwd[0] == '*') {
 		die("rd: password is locked\n");
 	} else if (!strcmp(pw->pw_passwd, "x")) {
 		struct spwd *sp;
-		if ((sp = getspnam("root")) == NULL)
+		if ((sp = getspnam(user)) == NULL)
 			die("rd: unable to get shadow file entry");
 		pw->pw_passwd = sp->sp_pwdp;
 	}
@@ -104,14 +116,25 @@ main(int argc, char **argv)
 		if (strcmp(pw->pw_passwd, crypt(readpw(), salt)))
 			die("rd: incorrect password\n");
 	}
+
+skip:
 #endif /* NO_PASSWD */
 
-	if (initgroups("root", pw->pw_gid) == -1)
+	if (initgroups(user, pw->pw_gid) == -1)
 		die("rd: unable to set groups");
 	if (setgid(pw->pw_gid) == -1)
 		die("rd: unable to set group id");
 	if (setuid(pw->pw_uid) == -1)
 		die("rd: unable to set user id");
+
+	if (state) {
+		const char *term = getenv("TERM");
+		const char *path = getenv("PATH");
+
+		clearenv();
+		setenv("TERM", term, 1);
+		setenv("PATH", path, 1);
+	}
 
 	setenv("HOME", pw->pw_dir, 1);
 	setenv("SHELL", pw->pw_shell[0] != '\0' ? pw->pw_shell : "/bin/sh", 1);
