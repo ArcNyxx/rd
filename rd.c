@@ -25,15 +25,14 @@ static char *readpw(void);
 static void
 die(const char *fmt, ...)
 {
+	va_list ap;
+	va_start(ap, fmt);
+	vfprintf(stderr, fmt, ap);
+	va_end(ap);
+
 	/* perror if last char not '\n' */
-	if (fmt[strlen(fmt) - 1] == '\n') {
-		va_list ap;
-		va_start(ap, fmt);
-		vfprintf(stderr, fmt, ap);
-		va_end(ap);
-	} else {
-		perror(fmt);
-	}
+	if (fmt[strlen(fmt) - 1] != '\n')
+		perror(NULL);
 	exit(127);
 }
 
@@ -135,5 +134,5 @@ skip:
 	execvp(argv[1], &argv[1]);
 	if (errno == ENOENT)
 		die("rd: unable to run %s: no such command\n", argv[1]);
-	die("rd: unable to run %s\n", argv[1]);
+	die("rd: unable to run %s", argv[1]);
 }

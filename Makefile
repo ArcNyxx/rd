@@ -35,7 +35,7 @@ install: all
 	chown root:$(GROUP) $(DESTDIR)$(PREFIX)/bin/rd
 	chmod 4754 $(DESTDIR)$(PREFIX)/bin/rd
 	mkdir -p $(DESTDIR)$(MANPREFIX)/man1
-	sed 's/VERSION/$(VERSION)/g' < rd.1 | sed 's/GROUP/$(GROUP)/g' \
+	sed 's/VERSION/$(VERSION)/g;s/GROUP/$(GROUP)/g' < rd.1 \
 		> $(DESTDIR)$(MANPREFIX)/man1/rd.1
 	chmod 644 $(DESTDIR)$(MANPREFIX)/man1/rd.1
 
