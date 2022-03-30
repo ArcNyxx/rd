@@ -92,14 +92,14 @@ main(int argc, char **argv)
 		goto skip;
 
 	/* get hashed passwd from /etc/passwd or /etc/shadow */
-	if (pw->pw_passwd[0] == '!' || pw->pw_passwd[0] == '*') {
-		die("rd: password is locked\n");
-	} else if (!strcmp(pw->pw_passwd, "x")) {
+	if (!strcmp(pw->pw_passwd, "x")) {
 		struct spwd *sp;
 		if ((sp = getspnam(user)) == NULL)
 			die("rd: unable to get shadow file entry");
 		pw->pw_passwd = sp->sp_pwdp;
 	}
+	if (pw->pw_passwd[0] == '!' || pw->pw_passwd[0] == '*')
+		die("rd: password is locked\n");
 
 	/* if passwd exists (no free login) */
 	if (pw->pw_passwd[0] != '\0') {
@@ -127,8 +127,7 @@ skip:
 		die("rd: unable to set user id");
 
 	if (state) {
-		const char *term = getenv("TERM");
-		const char *path = getenv("PATH");
+		const char *term = getenv("TERM"), *path = getenv("PATH");
 
 		clearenv();
 		setenv("TERM", term, 1);
