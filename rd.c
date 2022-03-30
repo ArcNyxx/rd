@@ -72,14 +72,13 @@ readpw(void)
 int
 main(int argc, char **argv)
 {
+	int state = 0, add = 0;
 	const char *user = "root";
-	int state = argc > 1 && argv[1][0] == '-' &&
-			strchr(argv[1], 'c') != NULL;
-	if (argc > 2 && argv[1][0] == '-' && strchr(argv[1], 'u') != NULL) {
-		user = argv[2];
-		state = 2;
-	}
-	argv = &argv[state];
+	if (argc > 1 && argv[1][0] == '-' && strchr(argv[1], 'c') != NULL)
+		state = add = 1;
+	if (argc > 2 && argv[1][0] == '-' && strchr(argv[1], 'u') != NULL)
+		add = 2, user = argv[2];
+	argv = &argv[add];
 
 	if (getuid() != 0 && geteuid() != 0)
 		die("rd: insufficient privileges\n");
