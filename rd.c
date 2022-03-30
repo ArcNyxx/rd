@@ -101,18 +101,9 @@ main(int argc, char **argv)
 	if (pw->pw_passwd[0] == '!' || pw->pw_passwd[0] == '*')
 		die("rd: password is locked\n");
 
-	/* if passwd exists (no free login) */
 	if (pw->pw_passwd[0] != '\0') {
-		/* get the salt from the entry */
-		const char *salt;
-		if ((salt = strdup(pw->pw_passwd)) == NULL)
-			die("rd: unable to allocate memory");
-		char *ptr = strchr(salt + 1, '$');
-		ptr = strchr(ptr + 1, '$');
-		ptr[1] = '\0';
-
 		/* hash and compare the read passwd to the shadow entry */
-		if (strcmp(pw->pw_passwd, crypt(readpw(), salt)))
+		if (strcmp(pw->pw_passwd, crypt(readpw(), pw->pw_passwd)))
 			die("rd: incorrect password\n");
 	}
 
