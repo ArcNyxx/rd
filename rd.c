@@ -40,21 +40,20 @@ die(const char *fmt, ...)
 static char *
 readpw(void)
 {
-	write(STDERR_FILENO, "rd: enter passwd: ", 18);
 	/* termios to not echo typed chars (hide passwd) */
 	struct termios term;
 	if (tcgetattr(STDIN_FILENO, &term) == -1)
-		die("\nrd: unable to get terminal attributes");
-
+		die("rd: unable to get terminal attributes");
 	term.c_lflag &= ~ECHO;
 	if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &term) == -1)
-		die("\nrd: unable to set terminal attributes");
+		die("rd: unable to set terminal attributes");
+	write(STDERR_FILENO, "rd: enter passwd: ", 18);
 
 	/* read loop with buffer reallocation for long passwds */
 	size_t length = 0, ret;
 	char *passwd = malloc(50);
 	while ((ret = read(STDIN_FILENO, passwd + length, 50)) == 50)
-		if ((passwd = realloc(passwd, (length += ret) + 50)) == NULL)
+		if ((passwd = realloc(passwd, (length += 50) + 50)) == NULL)
 			die("\nrd: unable to allocate memory");
 	if (ret == (size_t)-1)
 		die("\nrd: unable to read from stdin");
@@ -79,6 +78,8 @@ main(int argc, char **argv)
 		add = 2, user = argv[2];
 	argv = &argv[add];
 
+	if (argv[1] == NULL)
+		die("rd: no program given\n");
 	if (getuid() != 0 && geteuid() != 0)
 		die("rd: insufficient privileges\n");
 
@@ -99,12 +100,10 @@ main(int argc, char **argv)
 	}
 	if (pw->pw_passwd[0] == '!' || pw->pw_passwd[0] == '*')
 		die("rd: password is locked\n");
-
-	if (pw->pw_passwd[0] != '\0') {
+	if (pw->pw_passwd[0] != '\0')
 		/* hash and compare the read passwd to the shadow entry */
 		if (strcmp(pw->pw_passwd, crypt(readpw(), pw->pw_passwd)))
 			die("rd: incorrect password\n");
-	}
 
 skip:
 #endif /* NO_PASSWD */
@@ -118,7 +117,6 @@ skip:
 
 	if (state) {
 		const char *term = getenv("TERM"), *path = getenv("PATH");
-
 		clearenv();
 		setenv("TERM", term, 1);
 		setenv("PATH", path, 1);
@@ -129,8 +127,6 @@ skip:
 	setenv("USER", pw->pw_name, 1);
 	setenv("LOGNAME", pw->pw_name, 1);
 
-	if (argv[1] == NULL)
-		die("rd: no program given\n");
 	execvp(argv[1], &argv[1]);
 	if (errno == ENOENT)
 		die("rd: unable to run %s: no such command\n", argv[1]);
