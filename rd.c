@@ -43,10 +43,10 @@ readpw(void)
 	/* termios to not echo typed chars (hide passwd) */
 	struct termios term;
 	if (tcgetattr(STDIN_FILENO, &term) == -1)
-		die("rd: unable to get terminal attributes");
+		die("rd: unable to get terminal attributes: ");
 	term.c_lflag &= ~ECHO;
 	if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &term) == -1)
-		die("rd: unable to set terminal attributes");
+		die("rd: unable to set terminal attributes: ");
 	write(STDERR_FILENO, "rd: enter passwd: ", 18);
 
 	/* read loop with buffer reallocation for long passwds */
@@ -54,14 +54,14 @@ readpw(void)
 	char *passwd = malloc(50);
 	while ((ret = read(STDIN_FILENO, passwd + length, 50)) == 50)
 		if ((passwd = realloc(passwd, (length += 50) + 50)) == NULL)
-			die("\nrd: unable to allocate memory");
+			die("\nrd: unable to allocate memory: ");
 	if (ret == (size_t)-1)
-		die("\nrd: unable to read from stdin");
+		die("\nrd: unable to read from stdin: ");
 	passwd[length + ret - 1] = '\0';
 
 	term.c_lflag |= ECHO;
 	if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &term) == -1)
-		die("\nrd: unable to set terminal attributes");
+		die("\nrd: unable to set terminal attributes: ");
 	write(STDERR_FILENO, "\n", 1);
 	return passwd;
 }
@@ -85,7 +85,7 @@ main(int argc, char **argv)
 
 	struct passwd *pw;
 	if ((pw = getpwnam(user)) == NULL)
-		die("rd: unable to get passwd file entry");
+		die("rd: unable to get passwd file entry: ");
 
 #ifndef NO_PASSWD
 	if (access("/etc/rd", F_OK) == 0)
@@ -95,7 +95,7 @@ main(int argc, char **argv)
 	if (!strcmp(pw->pw_passwd, "x")) {
 		struct spwd *sp;
 		if ((sp = getspnam(user)) == NULL)
-			die("rd: unable to get shadow file entry");
+			die("rd: unable to get shadow file entry: ");
 		pw->pw_passwd = sp->sp_pwdp;
 	}
 	if (pw->pw_passwd[0] == '!' || pw->pw_passwd[0] == '*')
@@ -109,11 +109,11 @@ skip:
 #endif /* NO_PASSWD */
 
 	if (initgroups(user, pw->pw_gid) == -1)
-		die("rd: unable to set groups");
+		die("rd: unable to set groups: ");
 	if (setgid(pw->pw_gid) == -1)
-		die("rd: unable to set group id");
+		die("rd: unable to set group id: ");
 	if (setuid(pw->pw_uid) == -1)
-		die("rd: unable to set user id");
+		die("rd: unable to set user id: ");
 
 	if (state) {
 		const char *term = getenv("TERM"), *path = getenv("PATH");
