@@ -16,5 +16,11 @@ WPROFILE = -Wall -Wextra -Wstrict-prototypes -Wmissing-declarations \
 STD = -D_DEFAULT_SOURCE -D_POSIX_C_SOURCE=200809L
 LIB = -lcrypt # removable if -DNO_PASSWD set
 
-CFLAGS = $(WPROFILE) $(STD) -Os # add -DNO_PASSWD to disable password auth
+# -DNO_PASSWD  disable all password auth
+# -DNO_ACCESS  disable all password auth by creating /etc/rd
+# -DNO_STATE   disable -c flag (environment clearing)
+# -DNO_USER    disable -u flag (users other than root)
+MAC = # -DNO_PASSWD -DNO_ACCESS -DNO_STATE -DNO_USER
+
+CFLAGS = $(WPROFILE) $(STD) $(MAC) -Os
 LDFLAGS = $(LIB)

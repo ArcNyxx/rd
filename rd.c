@@ -70,26 +70,35 @@ readpw(void)
 int
 main(int argc, char **argv)
 {
-	int state = 0, add = 0;
-	const char *user = "root";
-	if (argc > 1 && argv[1][0] == '-' && strchr(argv[1], 'c') != NULL)
-		state = add = 1;
-	if (argc > 2 && argv[1][0] == '-' && strchr(argv[1], 'u') != NULL)
-		add = 2, user = argv[2];
-	argv = &argv[add];
-
 	if (argv[1] == NULL)
 		die("rd: no program given\n");
 	if (getuid() != 0 && geteuid() != 0)
 		die("rd: insufficient privileges\n");
+
+	const char *user = "root";
+#if !defined(NO_STATE) || !defined(NO_USER)
+	int add = 0;
+#ifndef NO_STATE
+	int state = 0;
+	if (argc > 1 && argv[1][0] == '-' && strchr(argv[1], 'c') != NULL)
+		state = add = 1;
+#endif /* NO_STATE */
+#ifndef NO_USER
+	if (argc > 2 && argv[1][0] == '-' && strchr(argv[1], 'u') != NULL)
+		add = 2, user = argv[2];
+#endif /* NO_USER */
+	argv = &argv[add];
+#endif /* !defined(NO_STATE) || !defined(NO_USER) */
 
 	struct passwd *pw;
 	if ((pw = getpwnam(user)) == NULL)
 		die("rd: unable to get passwd file entry: ");
 
 #ifndef NO_PASSWD
+#ifndef NO_ACCESS
 	if (access("/etc/rd", F_OK) == 0)
 		goto skip;
+#endif /* NO_ACCESS */
 
 	/* get hashed passwd from /etc/passwd or /etc/shadow */
 	if (!strcmp(pw->pw_passwd, "x")) {
@@ -105,7 +114,9 @@ main(int argc, char **argv)
 		if (strcmp(pw->pw_passwd, crypt(readpw(), pw->pw_passwd)))
 			die("rd: incorrect password\n");
 
+#ifndef NO_ACCESS
 skip:
+#endif /* NO_ACCESS */
 #endif /* NO_PASSWD */
 
 	if (initgroups(user, pw->pw_gid) == -1)
@@ -115,12 +126,14 @@ skip:
 	if (setuid(pw->pw_uid) == -1)
 		die("rd: unable to set user id: ");
 
+#ifndef NO_STATE
 	if (state) {
 		const char *term = getenv("TERM"), *path = getenv("PATH");
 		clearenv();
 		setenv("TERM", term, 1);
 		setenv("PATH", path, 1);
 	}
+#endif /* NO_STATE */
 
 	setenv("HOME", pw->pw_dir, 1);
 	setenv("SHELL", pw->pw_shell[0] != '\0' ? pw->pw_shell : "/bin/sh", 1);
