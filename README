@@ -21,4 +21,5 @@ rd can be built and installed with the following command (run as root):
 Configuration
 -------------
 rd can be configured by directly editing rd.c and (re)compiling the source
-code.  This keeps it fast, simple, and secure.
+code.  Furthermore, multiple macros can be defined in config.mk to configure
+build options.  This keeps it fast, simple, and secure.
