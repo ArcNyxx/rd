@@ -107,12 +107,16 @@ main(int argc, char **argv)
 			die("rd: unable to get shadow file entry: ");
 		pw->pw_passwd = sp->sp_pwdp;
 	}
-	if (pw->pw_passwd[0] == '!' || pw->pw_passwd[0] == '*')
+	if (pw->pw_passwd[0] == '!')
 		die("rd: password is locked\n");
-	if (pw->pw_passwd[0] != '\0')
+	if (pw->pw_passwd[0] != '\0') {
 		/* hash and compare the read passwd to the shadow entry */
-		if (strcmp(pw->pw_passwd, crypt(readpw(), pw->pw_passwd)))
+		char *hash;
+		if ((hash = crypt(readpw(), pw->pw_passwd)) == NULL)
+			die("rd: unable to hash input: ");
+		if (strcmp(pw->pw_passwd, hash))
 			die("rd: incorrect password\n");
+	}
 
 #ifndef NO_ACCESS
 skip:
