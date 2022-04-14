@@ -54,7 +54,7 @@ readpw(void)
 	char *passwd = malloc(50);
 	while ((ret = read(STDIN_FILENO, passwd + length, 50)) == 50)
 		if (passwd[length + 49] == '\n')
-			break; /* prevents double enter due to empty stdin */
+			break; /* prevents empty stdin read */
 		else if ((passwd = realloc(passwd,
 				(length += 50) + 50)) == NULL)
 			die("\nrd: unable to allocate memory: ");
