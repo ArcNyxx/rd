@@ -22,6 +22,8 @@ static void die(const char *fmt, ...);
 static char *readpw(void);
 #endif /* NO_PASSWD */
 
+extern char **environ;
+
 static void
 die(const char *fmt, ...)
 {
@@ -136,7 +138,7 @@ skip:
 #ifndef NO_STATE
 	if (state) {
 		const char *term = getenv("TERM"), *path = getenv("PATH");
-		clearenv();
+		environ = NULL;
 		setenv("TERM", term, 1);
 		setenv("PATH", path, 1);
 	}
