@@ -43,9 +43,4 @@ uninstall:
 	rm -f $(PREFIX)/bin/rd
 	rm -f $(MANPREFIX)/man1/rd.1
 
-options:
-	@echo rd build options
-	@echo "CFLAGS = $(CFLAGS)"
-	@echo "LDFLAGS = $(LDFLAGS)"
-
-.PHONY: all clean dist install uninstall options
+.PHONY: all clean dist install uninstall
