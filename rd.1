@@ -14,9 +14,10 @@ rd \- privilege elevator
 .BR rd (1)
 is a simple privilege elevation tool.
 .BR rd (1)
-only allows users in the GROUP group to execute commands as different users.
-After verifying authorisation, some critical environment variables are reset
-and
+only allows users in the
+.I GROUP
+group to execute commands as different users.  After verifying authorisation,
+some critical environment variables are reset and
 .I command
 is run.
 .SH OPTIONS
@@ -41,4 +42,5 @@ on success or with 127 on failure.
 .SH AUTHOR
 Written by ArcNyxx.
 .SH SEE ALSO
-.BR sudo (1),\  su (1),\  doas (1),\  passwd (5),\  shadow (3),\  crypt (3)
+.BR sudo (1),\  su (1),\  doas (1),\  crypt (3),\  passwd (3),\  shadow (3),
+.BR passwd (5),\  shadow (5)
