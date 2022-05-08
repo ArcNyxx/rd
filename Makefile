@@ -30,18 +30,18 @@ dist: clean
 	rm -rf rd-$(VERSION)
 
 install: all
-	mkdir -p $(DESTDIR)$(PREFIX)/bin
-	cp -f rd $(DESTDIR)$(PREFIX)/bin
-	chown root:$(GROUP) $(DESTDIR)$(PREFIX)/bin/rd
-	chmod 4754 $(DESTDIR)$(PREFIX)/bin/rd
-	mkdir -p $(DESTDIR)$(MANPREFIX)/man1
+	mkdir -p $(PREFIX)/bin
+	cp -f rd $(PREFIX)/bin
+	chown root:$(GROUP) $(PREFIX)/bin/rd
+	chmod 4754 $(PREFIX)/bin/rd
+	mkdir -p $(MANPREFIX)/man1
 	sed 's/VERSION/$(VERSION)/g;s/GROUP/$(GROUP)/g' < rd.1 \
-		> $(DESTDIR)$(MANPREFIX)/man1/rd.1
-	chmod 644 $(DESTDIR)$(MANPREFIX)/man1/rd.1
+		> $(MANPREFIX)/man1/rd.1
+	chmod 644 $(MANPREFIX)/man1/rd.1
 
 uninstall:
-	rm -f $(DESTDIR)$(PREFIX)/bin/rd
-	rm -f $(DESTDIR)$(MANPREFIX)/man1/rd.1
+	rm -f $(PREFIX)/bin/rd
+	rm -f $(MANPREFIX)/man1/rd.1
 
 options:
 	@echo rd build options
