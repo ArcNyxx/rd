@@ -53,7 +53,9 @@ readpw(void)
 
 	/* read loop with buffer reallocation for long passwds */
 	size_t length = 0, ret;
-	char *passwd = malloc(50);
+	char *passwd;
+	if ((passwd = malloc(50)) == NULL)
+		die("\nrd: unable to allocate memory: ");
 	while ((ret = read(STDIN_FILENO, passwd + length, 50)) == 50)
 		if (passwd[length + 49] == '\n')
 			break; /* prevents empty stdin read */
