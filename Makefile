@@ -25,8 +25,7 @@ clean:
 dist: clean
 	mkdir -p rd-$(VERSION)
 	cp -R README LICENCE Makefile config.mk rd.1 $(SRC) rd-$(VERSION)
-	tar -cf rd-$(VERSION).tar rd-$(VERSION)
-	gzip rd-$(VERSION).tar
+	tar -cf - rd-$(VERSION) | gzip -c > rd-$(VERSION).tar.gz
 	rm -rf rd-$(VERSION)
 
 install: all
