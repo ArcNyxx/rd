@@ -77,8 +77,6 @@ readpw(void)
 int
 main(int argc, char **argv)
 {
-	if (argv[1] == NULL)
-		die("rd: no program given\n");
 	if (getuid() != 0 && geteuid() != 0)
 		die("rd: insufficient privileges\n");
 
@@ -96,6 +94,9 @@ main(int argc, char **argv)
 #endif /* NO_USER */
 	argv = &argv[add];
 #endif /* !defined(NO_STATE) || !defined(NO_USER) */
+
+	if (argv[1] == NULL)
+		die("rd: no program given\n");
 
 	struct passwd *pw;
 	if ((pw = getpwnam(user)) == NULL)
@@ -154,5 +155,5 @@ skip:
 	execvp(argv[1], &argv[1]);
 	if (errno == ENOENT)
 		die("rd: unable to run %s: no such command\n", argv[1]);
-	die("rd: unable to run %s", argv[1]);
+	die("rd: unable to run %s\n", argv[1]);
 }
