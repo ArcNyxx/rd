@@ -21,8 +21,8 @@ some critical environment variables are reset and
 .I command
 is run.
 .BR rd (1)
-caches the latest successful password entry time and accesses it to prevent
-repeated password entry in a short period of time.
+saves the latest successful command execution time and grants password-less
+authorisation if commands are executed within a certain period of time.
 .SH OPTIONS
 .TP
 .B \-c
@@ -36,7 +36,7 @@ Defaults to
 .SH FILES
 .TP
 .I /etc/rd
-Holds latest successful password entry time.
+Latest modification time is read for password-less authorisation.
 .SH EXIT STATUS
 .BR rd (1)
 returns with the exit status of

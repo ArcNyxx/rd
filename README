@@ -4,8 +4,8 @@ rd is a simple privilege elevator for the Linux model of password storage.
 
 Requirements
 ------------
-rd requires libcrypt to verify passwords. If this feature is disabled, libcrypt
-is no longer required.
+rd requires libcrypt to verify passwords.  If this feature is disabled,
+libcrypt is no longer required.
 
 Installation
 ------------
@@ -21,9 +21,8 @@ rd can be built and installed with the following command (run as root):
 Configuration
 -------------
 rd can be configured by directly editing rd.c and (re)compiling the source
-code.  Furthermore, multiple macros can be defined in config.mk to configure
-build options.  This keeps it fast, simple, and secure.
+code.  Furthermore, multiple macros can be defined in config.mk to change or
+remove functionlity.  This keeps it fast, simple, and secure.
 
-Building with the -DNO_PASSWD macro or creating the /etc/rd file while not
-building with the -DNO_ACCESS macro is required for executing as users with
-locked passwords.
+Building without the -DPASS macro is required for executing as users with
+locked passwords as it bypasses the password entry stage.

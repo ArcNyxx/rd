@@ -11,22 +11,22 @@
 #include <string.h>
 #include <unistd.h>
 
-#ifndef NO_PASSWD
+#ifdef PASS
 #include <crypt.h>
 #include <shadow.h>
 #include <termios.h>
 
-#ifndef NO_PCACHE
+#ifdef SAVE
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <time.h>
-#endif /* NO_PCACHE */
-#endif /* NO_PASSWD */
+#endif /* SAVE */
+#endif /* PASS */
 
 static void die(const char *fmt, ...);
-#ifndef NO_PASSWD
+#ifdef PASS
 static char *readpw(void);
-#endif /* NO_PASSWD */
+#endif /* PASS */
 
 extern char **environ;
 
@@ -44,7 +44,7 @@ die(const char *fmt, ...)
 	exit(127);
 }
 
-#ifndef NO_PASSWD
+#ifdef PASS
 static char *
 readpw(void)
 {
@@ -78,7 +78,7 @@ readpw(void)
 	write(STDERR_FILENO, "\n", 1);
 	return passwd;
 }
-#endif /* NO_PASSWD */
+#endif /* PASS */
 
 int
 main(int argc, char **argv)
@@ -87,19 +87,19 @@ main(int argc, char **argv)
 		die("rd: insufficient privileges\n");
 
 	const char *user = "root";
-#if !defined(NO_STATE) || !defined(NO_USER)
+#if defined(VARS) || defined (USER)
 	int add = 0;
-#ifndef NO_STATE
+#ifdef VARS
 	int state = 0;
 	if (argc > 1 && argv[1][0] == '-' && strchr(argv[1], 'c') != NULL)
 		state = add = 1;
-#endif /* NO_STATE */
-#ifndef NO_USER
+#endif /* VARS */
+#ifdef USER
 	if (argc > 2 && argv[1][0] == '-' && strchr(argv[1], 'u') != NULL)
 		add = 2, user = argv[2];
-#endif /* NO_USER */
+#endif /* USER */
 	argv = &argv[add];
-#endif /* !defined(NO_STATE) || !defined(NO_USER) */
+#endif /* VARS || USER */
 
 	if (argv[1] == NULL)
 		die("rd: no program given\n");
@@ -108,13 +108,12 @@ main(int argc, char **argv)
 	if ((pw = getpwnam(user)) == NULL)
 		die("rd: unable to get passwd file entry: ");
 
-#ifndef NO_PASSWD
-#ifndef NO_PCACHE
-	time_t now;       /* check if current time within cache time limit */
-	struct stat info; /* of last successful run (cache file mod) */
-	if ((now = time(NULL)) == -1 || stat("/etc/rd", &info) == -1 ||
-			info.st_mtim.tv_sec + PTIME < now) {
-#endif /* NO_PCACHE */
+#ifdef PASS
+#ifdef SAVE
+	struct stat info; /* check within period of passwd-less auth */
+	if (stat("/etc/rd", &info) == -1 ||
+			info.st_mtim.tv_sec + PTIME < time(NULL)) {
+#endif /* SAVE */
 		/* get hashed passwd from /etc/passwd or /etc/shadow */
 		if (!strcmp(pw->pw_passwd, "x")) {
 			struct spwd *sp;
@@ -132,14 +131,14 @@ main(int argc, char **argv)
 			if (strcmp(pw->pw_passwd, hash))
 				die("rd: incorrect password\n");
 		}
-#ifndef NO_PCACHE
+#ifdef SAVE
 	}
 
 	int file;
 	if ((file = open("/etc/rd", O_WRONLY | O_CREAT, S_IWUSR)) != -1)
 		write(file, "", 1), close(file); /* update file mod time */
-#endif /* NO_PCACHE */
-#endif /* NO_PASSWD */
+#endif /* SAVE */
+#endif /* PASS */
 
 	if (initgroups(user, pw->pw_gid) == -1)
 		die("rd: unable to set groups: ");
@@ -148,14 +147,14 @@ main(int argc, char **argv)
 	if (setuid(pw->pw_uid) == -1)
 		die("rd: unable to set user id: ");
 
-#ifndef NO_STATE
+#ifdef VARS
 	if (state) {
 		const char *term = getenv("TERM"), *path = getenv("PATH");
 		environ = NULL;
 		setenv("TERM", term, 1);
 		setenv("PATH", path, 1);
 	}
-#endif /* NO_STATE */
+#endif /* VARS */
 
 	setenv("HOME", pw->pw_dir, 1);
 	setenv("SHELL", pw->pw_shell[0] != '\0' ? pw->pw_shell : "/bin/sh", 1);

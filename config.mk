@@ -14,16 +14,15 @@ WPROFILE = -Wall -Wextra -Wstrict-prototypes -Wmissing-declarations \
 -Wbad-function-cast -Winline -Wundef -Wnested-externs -Wcast-qual -Wshadow \
 -Wwrite-strings -Wno-unused-parameter -Wfloat-equal -Wpedantic
 STD = -D_DEFAULT_SOURCE -D_POSIX_C_SOURCE=200809L
-LIB = -lcrypt # removable if -DNO_PASSWD set
+LIB = -lcrypt # with -DPASS
 
-# time after passwd entry to permit passwd-less command execution
-PTIME = 300 # removable if -DNO_PCACHE set
+PTIME = 300 # seconds to allow passwd-less authorisation, with -DSAVE
 
-# -DNO_PASSWD  disable all password auth
-# -DNO_PCACHE  disable passwd caching
-# -DNO_STATE   disable -c flag (environment clearing)
-# -DNO_USER    disable -u flag (users other than root)
-MAC = -DPTIME=$(PTIME) # -DNO_PASSWD -DNO_PCACHE -DNO_STATE -DNO_USER
+# PASS - passwd authorisation
+# SAVE - time-based passwd-less authorisation
+# VARS - -c flag for environment clearing
+# USER - -u flag for alternative user login
+MAC = -DPASS -DSAVE -DVARS -DUSER -DPTIME=$(PTIME)
 
 CFLAGS = $(WPROFILE) $(STD) $(MAC) -Os
 LDFLAGS = $(LIB)
