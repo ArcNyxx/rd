@@ -16,11 +16,14 @@ WPROFILE = -Wall -Wextra -Wstrict-prototypes -Wmissing-declarations \
 STD = -D_DEFAULT_SOURCE -D_POSIX_C_SOURCE=200809L
 LIB = -lcrypt # removable if -DNO_PASSWD set
 
+# time after passwd entry to permit passwd-less command execution
+PTIME = 300 # removable if -DNO_PCACHE set
+
 # -DNO_PASSWD  disable all password auth
-# -DNO_ACCESS  disable password auth by creating /etc/rd
+# -DNO_PCACHE  disable passwd caching
 # -DNO_STATE   disable -c flag (environment clearing)
 # -DNO_USER    disable -u flag (users other than root)
-MAC = # -DNO_PASSWD -DNO_ACCESS -DNO_STATE -DNO_USER
+MAC = -DPTIME=$(PTIME) # -DNO_PASSWD -DNO_PCACHE -DNO_STATE -DNO_USER
 
 CFLAGS = $(WPROFILE) $(STD) $(MAC) -Os
 LDFLAGS = $(LIB)

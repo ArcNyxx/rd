@@ -20,6 +20,9 @@ group to execute commands as different users.  After verifying authorisation,
 some critical environment variables are reset and
 .I command
 is run.
+.BR rd (1)
+caches the latest successful password entry time and accesses it to prevent
+repeated password entry in a short period of time.
 .SH OPTIONS
 .TP
 .B \-c
@@ -33,7 +36,7 @@ Defaults to
 .SH FILES
 .TP
 .I /etc/rd
-Executes commands without a password if exists.
+Holds latest successful password entry time.
 .SH EXIT STATUS
 .BR rd (1)
 returns with the exit status of

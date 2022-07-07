@@ -17,6 +17,11 @@
 #include <termios.h>
 #endif /* NO_PASSWD */
 
+#ifndef NO_PCACHE
+#include <fcntl.h>
+#include <time.h>
+#endif /* NO_PCACHE */
+
 static void die(const char *fmt, ...);
 #ifndef NO_PASSWD
 static char *readpw(void);
@@ -103,10 +108,23 @@ main(int argc, char **argv)
 		die("rd: unable to get passwd file entry: ");
 
 #ifndef NO_PASSWD
-#ifndef NO_ACCESS
-	if (access("/etc/rd", F_OK) == 0)
+#ifndef NO_PCACHE
+	int file = -1;
+	struct flock lock = { .l_type = F_RDLCK, .l_whence = SEEK_SET };
+	char cache[22];
+	time_t now;
+
+	if ((file = open("/etc/rd", O_RDONLY)) == -1)
+		goto rpass;
+	if (fcntl(file, F_SETLKW, &lock) == -1)
+		goto rpass;
+	if (read(file, cache, 22) < 1)
+		goto rpass;
+	if ((now = time(NULL)) != -1 && strtol(cache, NULL, 10) + PTIME >= now)
 		goto skip;
-#endif /* NO_ACCESS */
+
+rpass:
+#endif /* NO_PCACHE */
 
 	/* get hashed passwd from /etc/passwd or /etc/shadow */
 	if (!strcmp(pw->pw_passwd, "x")) {
@@ -126,9 +144,34 @@ main(int argc, char **argv)
 			die("rd: incorrect password\n");
 	}
 
-#ifndef NO_ACCESS
+#ifndef NO_PCACHE
 skip:
-#endif /* NO_ACCESS */
+	if (file != -1) close(file);
+	if ((file = open("/etc/rd", O_WRONLY)) == -1)
+		goto wpass;
+	lock.l_type = F_WRLCK;
+	if (fcntl(file, F_SETLKW, &lock) == -1)
+		goto wcpass;
+
+	int len = 0, save;
+	if ((now = time(NULL)) == -1)
+		goto wcpass;
+	do
+		cache[len++] = '0' + (now % 10), now /= 10;
+	while (now != 0);
+	save = len;
+	--len;
+	for (int i = 0; i < len; ++i, --len)
+		cache[i] += cache[len], cache[len] = cache[i] - cache[len],
+				cache[i] -= cache[len];
+
+	write(file, cache, save);
+
+wcpass:
+	close(file);
+
+wpass:
+#endif /* NO_PCACHE */
 #endif /* NO_PASSWD */
 
 	if (initgroups(user, pw->pw_gid) == -1)
