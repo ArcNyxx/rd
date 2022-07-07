@@ -19,6 +19,7 @@
 
 #ifndef NO_PCACHE
 #include <fcntl.h>
+#include <sys/stat.h>
 #include <time.h>
 #endif /* NO_PCACHE */
 
@@ -109,21 +110,11 @@ main(int argc, char **argv)
 
 #ifndef NO_PASSWD
 #ifndef NO_PCACHE
-	int file = -1;
-	struct flock lock = { .l_type = F_RDLCK, .l_whence = SEEK_SET };
-	char cache[22];
 	time_t now;
-
-	if ((file = open("/etc/rd", O_RDONLY)) == -1)
-		goto rpass;
-	if (fcntl(file, F_SETLKW, &lock) == -1)
-		goto rpass;
-	if (read(file, cache, 22) < 1)
-		goto rpass;
-	if ((now = time(NULL)) != -1 && strtol(cache, NULL, 10) + PTIME >= now)
+	struct stat info;
+	if ((now = time(NULL)) != -1 && stat("/etc/rd", &info) != -1 &&
+			info.st_mtim.tv_sec + PTIME >= now)
 		goto skip;
-
-rpass:
 #endif /* NO_PCACHE */
 
 	/* get hashed passwd from /etc/passwd or /etc/shadow */
@@ -145,32 +136,12 @@ rpass:
 	}
 
 #ifndef NO_PCACHE
-skip:
-	if (file != -1) close(file);
-	if ((file = open("/etc/rd", O_WRONLY)) == -1)
-		goto wpass;
-	lock.l_type = F_WRLCK;
-	if (fcntl(file, F_SETLKW, &lock) == -1)
-		goto wcpass;
-
-	int len = 0, save;
-	if ((now = time(NULL)) == -1)
-		goto wcpass;
-	do
-		cache[len++] = '0' + (now % 10), now /= 10;
-	while (now != 0);
-	save = len;
-	--len;
-	for (int i = 0; i < len; ++i, --len)
-		cache[i] += cache[len], cache[len] = cache[i] - cache[len],
-				cache[i] -= cache[len];
-
-	write(file, cache, save);
-
-wcpass:
-	close(file);
-
-wpass:
+skip: ;
+	int file;
+	if ((file = open("/etc/rd", O_WRONLY | O_CREAT, S_IWUSR)) != -1) {
+		write(file, "", 1);
+		close(file);
+	}
 #endif /* NO_PCACHE */
 #endif /* NO_PASSWD */
 
