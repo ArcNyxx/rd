@@ -36,6 +36,7 @@ install: all
 	sed 's/VERSION/$(VERSION)/g;s/GROUP/$(GROUP)/g' < rd.1 \
 		> $(MANPREFIX)/man1/rd.1
 	chmod 644 $(MANPREFIX)/man1/rd.1
+	rm -f /etc/rd
 
 uninstall:
 	rm -f $(PREFIX)/bin/rd $(MANPREFIX)/man1/rd.1

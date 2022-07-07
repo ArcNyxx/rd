@@ -15,13 +15,13 @@
 #include <crypt.h>
 #include <shadow.h>
 #include <termios.h>
-#endif /* NO_PASSWD */
 
 #ifndef NO_PCACHE
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <time.h>
 #endif /* NO_PCACHE */
+#endif /* NO_PASSWD */
 
 static void die(const char *fmt, ...);
 #ifndef NO_PASSWD
@@ -113,30 +113,28 @@ main(int argc, char **argv)
 	time_t now;
 	struct stat info;
 	if ((now = time(NULL)) != -1 && stat("/etc/rd", &info) != -1 &&
-			info.st_mtim.tv_sec + PTIME >= now)
-		goto skip;
+			info.st_mtim.tv_sec + PTIME >= now) {
 #endif /* NO_PCACHE */
-
-	/* get hashed passwd from /etc/passwd or /etc/shadow */
-	if (!strcmp(pw->pw_passwd, "x")) {
-		struct spwd *sp;
-		if ((sp = getspnam(user)) == NULL)
-			die("rd: unable to get shadow file entry: ");
-		pw->pw_passwd = sp->sp_pwdp;
-	}
-	if (pw->pw_passwd[0] == '!')
-		die("rd: password is locked\n");
-	if (pw->pw_passwd[0] != '\0') {
-		/* hash and compare the read passwd to the shadow entry */
-		char *hash;
-		if ((hash = crypt(readpw(), pw->pw_passwd)) == NULL)
-			die("rd: unable to hash input: ");
-		if (strcmp(pw->pw_passwd, hash))
-			die("rd: incorrect password\n");
-	}
-
+		/* get hashed passwd from /etc/passwd or /etc/shadow */
+		if (!strcmp(pw->pw_passwd, "x")) {
+			struct spwd *sp;
+			if ((sp = getspnam(user)) == NULL)
+				die("rd: unable to get shadow file entry: ");
+			pw->pw_passwd = sp->sp_pwdp;
+		}
+		if (pw->pw_passwd[0] == '!')
+			die("rd: password is locked\n");
+		if (pw->pw_passwd[0] != '\0') {
+			/* hash and compare read passwd to entry */
+			char *hash;
+			if ((hash = crypt(readpw(), pw->pw_passwd)) == NULL)
+				die("rd: unable to hash input: ");
+			if (strcmp(pw->pw_passwd, hash))
+				die("rd: incorrect password\n");
+		}
 #ifndef NO_PCACHE
-skip: ;
+	}
+
 	int file;
 	if ((file = open("/etc/rd", O_WRONLY | O_CREAT, S_IWUSR)) != -1) {
 		write(file, "", 1);
