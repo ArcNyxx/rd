@@ -110,10 +110,10 @@ main(int argc, char **argv)
 
 #ifndef NO_PASSWD
 #ifndef NO_PCACHE
-	time_t now;
-	struct stat info;
-	if ((now = time(NULL)) != -1 && stat("/etc/rd", &info) != -1 &&
-			info.st_mtim.tv_sec + PTIME >= now) {
+	time_t now;       /* check if current time within cache time limit */
+	struct stat info; /* of last successful run (cache file mod) */
+	if ((now = time(NULL)) == -1 || stat("/etc/rd", &info) == -1 ||
+			info.st_mtim.tv_sec + PTIME < now) {
 #endif /* NO_PCACHE */
 		/* get hashed passwd from /etc/passwd or /etc/shadow */
 		if (!strcmp(pw->pw_passwd, "x")) {
@@ -136,10 +136,8 @@ main(int argc, char **argv)
 	}
 
 	int file;
-	if ((file = open("/etc/rd", O_WRONLY | O_CREAT, S_IWUSR)) != -1) {
-		write(file, "", 1);
-		close(file);
-	}
+	if ((file = open("/etc/rd", O_WRONLY | O_CREAT, S_IWUSR)) != -1)
+		write(file, "", 1), close(file); /* update file mod time */
 #endif /* NO_PCACHE */
 #endif /* NO_PASSWD */
 
