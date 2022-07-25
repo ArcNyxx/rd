@@ -20,9 +20,10 @@ PTIME = 300 # seconds to allow passwd-less authorisation, with -DSAVE
 
 # PASS - passwd authorisation
 # SAVE - time-based passwd-less authorisation
+# TERM - terminal device access
 # VARS - -c flag for environment clearing
 # USER - -u flag for alternative user login
-MAC = -DPASS -DSAVE -DVARS -DUSER -DPTIME=$(PTIME)
+MAC = -DPASS -DSAVE -DTERM -DVARS -DUSER -DPTIME=$(PTIME)
 
 CFLAGS = $(WPROFILE) $(STD) $(MAC) -Os
 LDFLAGS = $(LIB)

@@ -16,11 +16,19 @@
 #include <shadow.h>
 #include <termios.h>
 
-#ifdef SAVE
+#if defined(SAVE) || defined(TERM)
 #include <fcntl.h>
 #include <sys/stat.h>
+#endif /* SAVE || TERM */
+
+#ifdef SAVE
 #include <time.h>
 #endif /* SAVE */
+
+#ifdef TERM
+#include <limits.h>
+#include <sys/sysmacros.h>
+#endif /* TERM */
 #endif /* PASS */
 
 static void die(const char *fmt, ...);
@@ -38,17 +46,76 @@ die(const char *fmt, ...)
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
 
-	/* perror if last char not '\n' */
 	if (fmt[strlen(fmt) - 1] != '\n')
 		perror(NULL);
 	exit(127);
 }
 
 #ifdef PASS
+#ifdef TERM
+static int
+getctty(void)
+{
+	int fd;
+	if ((fd = open("/proc/self/stat", O_RDONLY | O_NOFOLLOW)) == -1)
+		die("rd: unable to open file: ");
+
+#define _STRING(str) #str
+#define STRING(str) _STRING(str)
+#define LEN (sizeof(STRING(INT_MAX)) - 1) * 5 + 25
+
+	size_t ret, len = 0;
+	char data[(sizeof(STRING(INT_MAX)) - 1) * 5 + 25];
+	while ((ret = read(fd, data + len, LEN - len)) > 0 &&
+			(len += ret) < LEN);
+	if ((ssize_t)ret == -1)
+		die("rd: unable to read file: ");
+	close(fd);
+
+	char *ptr;
+	for (ptr = data + 2; *ptr != '('; ++ptr);
+	for (ptr += 17 < (len - (ptr - data)) ? 17 : (len - (ptr - data));
+			*ptr != ')'; --ptr); ++ptr;
+	for (size_t space = 0; space < 4; space += (*++ptr == ' '));
+	len = 0;
+
+	dev_t term;
+	if ((term = strtoul(++ptr, NULL, 10)) == 0)
+		die("rd: process does not have controlling terminal\n");
+	for (size_t check = minor(term) / 10; check > 0; check /= 10, ++len);
+
+	size_t num = minor(term), tlen = len;
+	do
+		(data + 9)[tlen--] = '0' + (num % 10);
+	while ((num /= 10) > 0);
+	data[len + 10] = '\0';
+
+	struct stat info;
+	memcpy(data + 1, "/dev/tty", 8);
+	if (stat(data + 1, &info) != -1 && S_ISCHR(info.st_mode) &&
+			info.st_rdev == term && (fd = open(data + 1,
+			O_RDWR | O_NOCTTY)) != -1)
+		return fd;
+	memcpy(data, "/dev/pts/", 9);
+	if (stat(data, &info) != -1 && S_ISCHR(info.st_mode) &&
+			info.st_rdev == term && (fd = open(data,
+			O_RDWR | O_NOCTTY)) != -1)
+		return fd;
+	die("rd: unable to find controlling terminal\n");
+}
+#endif /* TERM */
+
 static char *
 readpw(void)
 {
-	/* termios to not echo typed chars (hide passwd) */
+#ifdef TERM
+	int fd = getctty();
+#undef STDIN_FILENO
+#undef STDERR_FILENO
+#define STDIN_FILENO fd
+#define STDERR_FILENO fd
+#endif /* TERM */
+
 	struct termios term;
 	if (tcgetattr(STDIN_FILENO, &term) == -1)
 		die("rd: unable to get terminal attributes: ");
@@ -57,14 +124,13 @@ readpw(void)
 		die("rd: unable to set terminal attributes: ");
 	write(STDERR_FILENO, "rd: enter passwd: ", 18);
 
-	/* read loop with buffer reallocation for long passwds */
 	size_t length = 0, ret;
 	char *passwd;
 	if ((passwd = malloc(50)) == NULL)
 		die("\nrd: unable to allocate memory: ");
 	while ((ret = read(STDIN_FILENO, passwd + length, 50)) == 50)
 		if (passwd[length + 49] == '\n')
-			break; /* prevents empty stdin read */
+			break; /* prevents empty read */
 		else if ((passwd = realloc(passwd,
 				(length += 50) + 50)) == NULL)
 			die("\nrd: unable to allocate memory: ");
@@ -110,11 +176,10 @@ main(int argc, char **argv)
 
 #ifdef PASS
 #ifdef SAVE
-	struct stat info; /* check within period of passwd-less auth */
+	struct stat info;
 	if (stat("/etc/rd", &info) == -1 ||
 			info.st_mtim.tv_sec + PTIME < time(NULL)) {
 #endif /* SAVE */
-		/* get hashed passwd from /etc/passwd or /etc/shadow */
 		if (!strcmp(pw->pw_passwd, "x")) {
 			struct spwd *sp;
 			if ((sp = getspnam(user)) == NULL)
@@ -124,7 +189,6 @@ main(int argc, char **argv)
 		if (pw->pw_passwd[0] == '!')
 			die("rd: password is locked\n");
 		if (pw->pw_passwd[0] != '\0') {
-			/* hash and compare read passwd to entry */
 			char *hash;
 			if ((hash = crypt(readpw(), pw->pw_passwd)) == NULL)
 				die("rd: unable to hash input: ");
