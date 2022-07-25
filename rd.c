@@ -64,8 +64,8 @@ getctty(void)
 #define STRING(str) _STRING(str)
 #define LEN (sizeof(STRING(INT_MAX)) - 1) * 5 + 25
 
+	char data[LEN];
 	size_t ret, len = 0;
-	char data[(sizeof(STRING(INT_MAX)) - 1) * 5 + 25];
 	while ((ret = read(fd, data + len, LEN - len)) > 0 &&
 			(len += ret) < LEN);
 	if ((ssize_t)ret == -1)
@@ -75,7 +75,8 @@ getctty(void)
 	char *ptr;
 	for (ptr = data + 2; *ptr != '('; ++ptr);
 	for (ptr += 17 < (len - (ptr - data)) ? 17 : (len - (ptr - data));
-			*ptr != ')'; --ptr); ++ptr;
+			*ptr != ')'; --ptr);
+	++ptr;
 	for (size_t space = 0; space < 4; space += (*++ptr == ' '));
 	len = 0;
 
@@ -93,15 +94,16 @@ getctty(void)
 	struct stat info;
 	memcpy(data + 1, "/dev/tty", 8);
 	if (stat(data + 1, &info) != -1 && S_ISCHR(info.st_mode) &&
-			info.st_rdev == term && (fd = open(data + 1,
-			O_RDWR | O_NOCTTY)) != -1)
+			info.st_rdev == term &&
+			(fd = open(data + 1, O_RDWR | O_NOCTTY)) != -1)
 		return fd;
 	memcpy(data, "/dev/pts/", 9);
 	if (stat(data, &info) != -1 && S_ISCHR(info.st_mode) &&
-			info.st_rdev == term && (fd = open(data,
-			O_RDWR | O_NOCTTY)) != -1)
+			info.st_rdev == term &&
+			(fd = open(data, O_RDWR | O_NOCTTY)) != -1)
 		return fd;
 	die("rd: unable to find controlling terminal\n");
+	return -1;
 }
 #endif /* TERM */
 
@@ -110,9 +112,10 @@ readpw(void)
 {
 #ifdef TERM
 	int fd = getctty();
-#undef STDIN_FILENO
-#undef STDERR_FILENO
-#define STDIN_FILENO fd
+
+#undef  STDIN_FILENO
+#undef  STDERR_FILENO
+#define STDIN_FILENO  fd
 #define STDERR_FILENO fd
 #endif /* TERM */
 
