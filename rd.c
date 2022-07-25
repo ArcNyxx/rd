@@ -66,44 +66,42 @@ getctty(void)
 	if ((fd = open("/proc/self/stat", O_RDONLY | O_NOFOLLOW)) == -1)
 		die("rd: unable to open file: ");
 
-	char data[LEN];
-	ssize_t ret, len = 0;
+	char data[LEN], *ptr;
+	ssize_t ret, len = 0, fut;
 	while ((ret = read(fd, data + len, LEN - len)) > 0 &&
 			(len += ret) < (ssize_t)LEN);
 	if (ret == -1)
 		die("rd: unable to read file: ");
 	close(fd);
 
-	char *ptr;
 	for (ptr = data + 2; *ptr != '('; ++ptr);
 	for (ptr += 17 < (len - (ptr - data)) ? 17 : (len - (ptr - data));
 			*ptr != ')'; --ptr);
-	++ptr;
-	for (int space = 0; space < 4; space += (*++ptr == ' '));
-	len = 0;
+	for (fut = 0, ++ptr; fut < 4; fut += (*++ptr == ' ' ));
 
 	dev_t term;
-	if ((term = strtoul(++ptr, NULL, 10)) == 0)
+	if ((term = strtoul(++ptr, NULL, 10)) == 0) /* also parsing error */
 		die("rd: process does not have controlling terminal\n");
-	for (int check = minor(term) / 10; check > 0; check /= 10, ++len);
+	for (ret = minor(term) / 10, len = 0; ret > 0; ret /= 10, ++len);
 
-	int num = minor(term), tlen = len;
+#define MAXPATH 9
+	ret = minor(term), fut = len;
 	do
-		(data + 9)[tlen--] = '0' + (num % 10);
-	while ((num /= 10) > 0);
-	data[len + 10] = '\0';
+		(data + MAXPATH)[fut--] = '0' + (ret % 10);
+	while ((ret /= 10) > 0);
+	data[len + MAXPATH + 1] = '\0';
+
+#define CHK(str)                                                              \
+	memcpy(data + (MAXPATH - (sizeof(str) - 1)), str, sizeof(str) - 1);   \
+	if (stat(data + (MAXPATH - (sizeof(str) - 1)), &info) != -1 &&        \
+			S_ISCHR(info.st_mode) && info.st_rdev == term &&      \
+			(fd = open(data + (MAXPATH - (sizeof(str) - 1)),      \
+			O_RDWR | O_NOCTTY)) != -1)                            \
+		return fd;
 
 	struct stat info;
-	memcpy(data + 1, "/dev/tty", 8);
-	if (stat(data + 1, &info) != -1 && S_ISCHR(info.st_mode) &&
-			info.st_rdev == term &&
-			(fd = open(data + 1, O_RDWR | O_NOCTTY)) != -1)
-		return fd;
-	memcpy(data, "/dev/pts/", 9);
-	if (stat(data, &info) != -1 && S_ISCHR(info.st_mode) &&
-			info.st_rdev == term &&
-			(fd = open(data, O_RDWR | O_NOCTTY)) != -1)
-		return fd;
+	CHK("/dev/tty");
+	CHK("/dev/pts/");
 	die("rd: unable to find controlling terminal\n");
 	return -1;
 }
