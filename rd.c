@@ -32,6 +32,16 @@
 #define _STRING(str) #str
 #define STRING(str) _STRING(str)
 #define LEN (sizeof(STRING(INT_MAX)) - 1) * 5 + 25
+
+#define MAX_PATH 9
+#define FINDCTTY(str)                                                         \
+	memcpy(data + (MAX_PATH - (sizeof(str) - 1)), str, sizeof(str) - 1);   \
+	if (stat(data + (MAX_PATH - (sizeof(str) - 1)), &info) != -1 &&        \
+			S_ISCHR(info.st_mode) && info.st_rdev == term &&      \
+			(fd = open(data + (MAX_PATH - (sizeof(str) - 1)),      \
+			O_RDWR | O_NOCTTY)) != -1)                            \
+		return fd;
+
 #endif /* TERM */
 #endif /* PASS */
 
@@ -67,7 +77,7 @@ getctty(void)
 		die("rd: unable to open file: ");
 
 	char data[LEN], *ptr;
-	ssize_t ret, len = 0, fut;
+	ssize_t ret, len = 0, num;
 	while ((ret = read(fd, data + len, LEN - len)) > 0 &&
 			(len += ret) < (ssize_t)LEN);
 	if (ret == -1)
@@ -76,32 +86,22 @@ getctty(void)
 
 	for (ptr = data + 2; *ptr != '('; ++ptr);
 	for (ptr += 17 < (len - (ptr - data)) ? 17 : (len - (ptr - data));
-			*ptr != ')'; --ptr);
-	for (fut = 0, ++ptr; fut < 4; fut += (*++ptr == ' ' ));
+			*ptr != ')'; --ptr); /* step back to close paren */
+	for (num = 0, ++ptr; num < 4; num += (*++ptr == ' ' ));
 
 	dev_t term;
 	if ((term = strtoul(++ptr, NULL, 10)) == 0) /* also parsing error */
 		die("rd: process does not have controlling terminal\n");
+
 	for (ret = minor(term) / 10, len = 0; ret > 0; ret /= 10, ++len);
-
-#define MAXPATH 9
-	ret = minor(term), fut = len;
+	ret = minor(term), num = len;
 	do
-		(data + MAXPATH)[fut--] = '0' + (ret % 10);
+		(data + MAX_PATH)[num--] = '0' + (ret % 10);
 	while ((ret /= 10) > 0);
-	data[len + MAXPATH + 1] = '\0';
-
-#define CHK(str)                                                              \
-	memcpy(data + (MAXPATH - (sizeof(str) - 1)), str, sizeof(str) - 1);   \
-	if (stat(data + (MAXPATH - (sizeof(str) - 1)), &info) != -1 &&        \
-			S_ISCHR(info.st_mode) && info.st_rdev == term &&      \
-			(fd = open(data + (MAXPATH - (sizeof(str) - 1)),      \
-			O_RDWR | O_NOCTTY)) != -1)                            \
-		return fd;
+	data[len + MAX_PATH + 1] = '\0';
 
 	struct stat info;
-	CHK("/dev/tty");
-	CHK("/dev/pts/");
+	FINDCTTY("/dev/tty") FINDCTTY("/dev/pts/")
 	die("rd: unable to find controlling terminal\n");
 	return -1;
 }
@@ -110,42 +110,37 @@ getctty(void)
 static char *
 readpw(void)
 {
+	int fdin = STDIN_FILENO, fdout = STDERR_FILENO;
 #ifdef TERM
-	int fd = getctty();
-
-#undef  STDIN_FILENO
-#undef  STDERR_FILENO
-#define STDIN_FILENO  fd
-#define STDERR_FILENO fd
+	fdin = fdout = getctty();
 #endif /* TERM */
 
 	struct termios term;
-	if (tcgetattr(STDIN_FILENO, &term) == -1)
+	if (tcgetattr(fdin, &term) == -1)
 		die("rd: unable to get terminal attributes: ");
 	term.c_lflag &= ~ECHO;
-	if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &term) == -1)
+	if (tcsetattr(fdin, TCSAFLUSH, &term) == -1)
 		die("rd: unable to set terminal attributes: ");
-	write(STDERR_FILENO, "rd: enter passwd: ", 18);
+	write(fdout, "rd: enter passwd: ", 18);
 
-	char *passwd;
+	char *pass;
 	ssize_t ret, len = 0;
-	if ((passwd = malloc(50)) == NULL)
+	if ((pass = malloc(50)) == NULL)
 		die("\nrd: unable to allocate memory: ");
-	while ((ret = read(STDIN_FILENO, passwd + len, 50)) == 50)
-		if (passwd[len + 49] == '\n')
+	while ((ret = read(fdin, pass + len, 50)) == 50)
+		if (pass[len + 49] == '\n')
 			break; /* prevents empty read */
-		else if ((passwd = realloc(passwd,
-				(len += 50) + 50)) == NULL)
+		else if ((pass = realloc(pass, (len += 50) + 50)) == NULL)
 			die("\nrd: unable to allocate memory: ");
 	if (ret == -1)
 		die("\nrd: unable to read from stdin: ");
-	passwd[len + ret - 1] = '\0';
+	pass[len + ret - 1] = '\0';
 
 	term.c_lflag |= ECHO;
-	if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &term) == -1)
+	if (tcsetattr(fdin, TCSAFLUSH, &term) == -1)
 		die("\nrd: unable to set terminal attributes: ");
-	write(STDERR_FILENO, "\n", 1);
-	return passwd;
+	write(fdout, "\n", 1);
+	return pass;
 }
 #endif /* PASS */
 
