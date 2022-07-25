@@ -135,7 +135,7 @@ main(int argc, char **argv)
 	}
 
 	int file;
-	if ((file = open("/etc/rd", O_WRONLY | O_CREAT, S_IWUSR)) != -1)
+	if ((file = creat("/etc/rd", S_IWUSR)) != -1)
 		write(file, "", 1), close(file); /* update file mod time */
 #endif /* SAVE */
 #endif /* PASS */
