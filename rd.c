@@ -28,6 +28,10 @@
 #ifdef TERM
 #include <limits.h>
 #include <sys/sysmacros.h>
+
+#define _STRING(str) #str
+#define STRING(str) _STRING(str)
+#define LEN (sizeof(STRING(INT_MAX)) - 1) * 5 + 25
 #endif /* TERM */
 #endif /* PASS */
 
@@ -36,7 +40,9 @@ static void die(const char *fmt, ...);
 static char *readpw(void);
 #endif /* PASS */
 
+#ifdef VARS
 extern char **environ;
+#endif /* VARS */
 
 static void
 die(const char *fmt, ...)
@@ -60,15 +66,11 @@ getctty(void)
 	if ((fd = open("/proc/self/stat", O_RDONLY | O_NOFOLLOW)) == -1)
 		die("rd: unable to open file: ");
 
-#define _STRING(str) #str
-#define STRING(str) _STRING(str)
-#define LEN (sizeof(STRING(INT_MAX)) - 1) * 5 + 25
-
 	char data[LEN];
-	size_t ret, len = 0;
+	ssize_t ret, len = 0;
 	while ((ret = read(fd, data + len, LEN - len)) > 0 &&
-			(len += ret) < LEN);
-	if ((ssize_t)ret == -1)
+			(len += ret) < (ssize_t)LEN);
+	if (ret == -1)
 		die("rd: unable to read file: ");
 	close(fd);
 
@@ -77,15 +79,15 @@ getctty(void)
 	for (ptr += 17 < (len - (ptr - data)) ? 17 : (len - (ptr - data));
 			*ptr != ')'; --ptr);
 	++ptr;
-	for (size_t space = 0; space < 4; space += (*++ptr == ' '));
+	for (int space = 0; space < 4; space += (*++ptr == ' '));
 	len = 0;
 
 	dev_t term;
 	if ((term = strtoul(++ptr, NULL, 10)) == 0)
 		die("rd: process does not have controlling terminal\n");
-	for (size_t check = minor(term) / 10; check > 0; check /= 10, ++len);
+	for (int check = minor(term) / 10; check > 0; check /= 10, ++len);
 
-	size_t num = minor(term), tlen = len;
+	int num = minor(term), tlen = len;
 	do
 		(data + 9)[tlen--] = '0' + (num % 10);
 	while ((num /= 10) > 0);
@@ -127,19 +129,19 @@ readpw(void)
 		die("rd: unable to set terminal attributes: ");
 	write(STDERR_FILENO, "rd: enter passwd: ", 18);
 
-	size_t length = 0, ret;
 	char *passwd;
+	ssize_t ret, len = 0;
 	if ((passwd = malloc(50)) == NULL)
 		die("\nrd: unable to allocate memory: ");
-	while ((ret = read(STDIN_FILENO, passwd + length, 50)) == 50)
-		if (passwd[length + 49] == '\n')
+	while ((ret = read(STDIN_FILENO, passwd + len, 50)) == 50)
+		if (passwd[len + 49] == '\n')
 			break; /* prevents empty read */
 		else if ((passwd = realloc(passwd,
-				(length += 50) + 50)) == NULL)
+				(len += 50) + 50)) == NULL)
 			die("\nrd: unable to allocate memory: ");
-	if (ret == (size_t)-1)
+	if (ret == -1)
 		die("\nrd: unable to read from stdin: ");
-	passwd[length + ret - 1] = '\0';
+	passwd[len + ret - 1] = '\0';
 
 	term.c_lflag |= ECHO;
 	if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &term) == -1)
