@@ -23,6 +23,10 @@ is run.
 .BR rd (1)
 saves the latest successful command execution time and grants password-less
 authorisation if commands are executed within a certain period of time.
+.BR rd (1)
+accesses the controlling terminal directly rather than using stdin, allowing
+.I command
+to read stdin from a pipe.
 .SH OPTIONS
 .TP
 .B \-c
