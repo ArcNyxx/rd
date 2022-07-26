@@ -28,20 +28,6 @@
 #ifdef TERM
 #include <limits.h>
 #include <sys/sysmacros.h>
-
-#define _STRING(str) #str
-#define STRING(str) _STRING(str)
-#define LEN (sizeof(STRING(INT_MAX)) - 1) * 5 + 25
-
-#define MAX_PATH 9
-#define FINDCTTY(str)                                                         \
-	memcpy(data + (MAX_PATH - (sizeof(str) - 1)), str, sizeof(str) - 1);   \
-	if (stat(data + (MAX_PATH - (sizeof(str) - 1)), &info) != -1 &&        \
-			S_ISCHR(info.st_mode) && info.st_rdev == term &&      \
-			(fd = open(data + (MAX_PATH - (sizeof(str) - 1)),      \
-			O_RDWR | O_NOCTTY)) != -1)                            \
-		return fd;
-
 #endif /* TERM */
 #endif /* PASS */
 
@@ -72,14 +58,16 @@ die(const char *fmt, ...)
 static int
 getctty(void)
 {
+
+
 	int fd;
 	if ((fd = open("/proc/self/stat", O_RDONLY | O_NOFOLLOW)) == -1)
 		die("rd: unable to open file: ");
 
-	char data[LEN], *ptr;
+	char data[76], *ptr;
 	ssize_t ret, len = 0, num;
-	while ((ret = read(fd, data + len, LEN - len)) > 0 &&
-			(len += ret) < (ssize_t)LEN);
+	while ((ret = read(fd, data + len, 76 - len)) > 0 &&
+			(len += ret) < 76);
 	if (ret == -1)
 		die("rd: unable to read file: ");
 	close(fd);
@@ -96,14 +84,20 @@ getctty(void)
 	for (ret = minor(term) / 10, len = 0; ret > 0; ret /= 10, ++len);
 	ret = minor(term), num = len;
 	do
-		(data + MAX_PATH)[num--] = '0' + (ret % 10);
+		(data + 9)[num--] = '0' + (ret % 10);
 	while ((ret /= 10) > 0);
-	data[len + MAX_PATH + 1] = '\0';
+	data[len + 10] = '\0';
 
-	struct stat info;
-	FINDCTTY("/dev/tty") FINDCTTY("/dev/pts/")
-	die("rd: unable to find controlling terminal\n");
-	return -1;
+	struct stat at;
+	memcpy(data + 1, "/dev/tty", 8);
+	if (stat(data + 1, &at) != -1 && S_ISCHR(at.st_mode) && at.st_rdev ==
+			term && (fd = open(data + 1, O_RDWR | O_NOCTTY)) != -1)
+		return fd;
+	memcpy(data, "/dev/pts/", 9);
+	if (stat(data, &at) != -1 && S_ISCHR(at.st_mode) && at.st_rdev ==
+			term && (fd = open(data, O_RDWR | O_NOCTTY)) != -1)
+		return fd;
+	die("rd: unable to find controlling terminal\n"); return -1;
 }
 #endif /* TERM */
 
@@ -174,9 +168,8 @@ main(int argc, char **argv)
 
 #ifdef PASS
 #ifdef SAVE
-	struct stat info;
-	if (stat("/etc/rd", &info) == -1 ||
-			info.st_mtim.tv_sec + PTIME < time(NULL)) {
+	struct stat at;
+	if (stat("/etc/rd", &at) == -1 || at.st_mtime + PTIME < time(NULL)) {
 #endif /* SAVE */
 		if (!strcmp(pw->pw_passwd, "x")) {
 			struct spwd *sp;
@@ -213,8 +206,7 @@ main(int argc, char **argv)
 	if (state) {
 		const char *term = getenv("TERM"), *path = getenv("PATH");
 		environ = NULL;
-		setenv("TERM", term, 1);
-		setenv("PATH", path, 1);
+		setenv("TERM", term, 1); setenv("PATH", path, 1);
 	}
 #endif /* VARS */
 
