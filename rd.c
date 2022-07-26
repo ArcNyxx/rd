@@ -28,6 +28,7 @@
 #ifdef TERM
 #include <limits.h>
 #include <sys/sysmacros.h>
+#define SWAP(num1, num2) num1 += num2, num2 = num1 - num2, num1 -= num2
 #endif /* TERM */
 #endif /* PASS */
 
@@ -59,41 +60,38 @@ static int
 getctty(void)
 {
 	int fd;
-	if ((fd = open("/proc/self/stat", O_RDONLY | O_NOFOLLOW)) == -1)
-		die("rd: unable to open file: ");
-
 	char data[76], *ptr;
 	ssize_t ret, len = 0, num;
+	if ((fd = open("/proc/self/stat", O_RDONLY | O_NOFOLLOW)) == -1)
+		die("enc: unable to open file: ");
 	while ((ret = read(fd, data + len, 76 - len)) > 0 &&
 			(len += ret) < 76);
 	if (ret == -1)
-		die("rd: unable to read file: ");
+		die("enc: unable to read file: ");
 	close(fd);
 
-	for (ptr = data + 2; *ptr != '('; ++ptr);
-	for (ptr += 17 < (len - (ptr - data)) ? 17 : (len - (ptr - data));
-			*ptr != ')'; --ptr); /* step back to close paren */
-	for (num = 0, ++ptr; num < 4; num += (*++ptr == ' ' ));
-
 	dev_t term;
-	if ((term = strtoul(++ptr, NULL, 10)) == 0) /* also parsing error */
-		die("rd: unable to find controlling terminal\n");
+	for (ptr = data + 2; *ptr != '('; ++ptr);
+	for (ptr += 17; *ptr != ')'; --ptr);
+	for (num = 0, ++ptr; num < 4; num += (*++ptr == ' '));
+	if ((term = strtoul(++ptr, NULL, 10)) == 0)
+		die("enc: unable to find controlling terminal\n");
 
-	for (ret = minor(term) / 10, len = 0; ret > 0; ret /= 10, ++len);
-	ret = minor(term), num = len;
-	do
-		(data + 9)[num--] = '0' + (ret % 10);
-	while ((ret /= 10) > 0);
-	data[len + 10] = '\0';
+	num = minor(term), len = 0;
+	do (data + 9)[len++] = '0' + (num % 10);
+	while ((num /= 10) > 0);
+	for (ssize_t i = 0; i < len / 2; ++i)
+		SWAP((data + 9)[i], (data + 9)[len - i - 1]);
+	data[len + 9] = '\0';
 
 	struct stat at;
-	memcpy(data + 1, "/dev/tty", 8);
-	if (stat(data + 1, &at) != -1 && S_ISCHR(at.st_mode) && at.st_rdev ==
-			term && (fd = open(data + 1, O_RDWR | O_NOCTTY)) != -1)
-		return fd;
 	memcpy(data, "/dev/pts/", 9);
-	if (stat(data, &at) != -1 && S_ISCHR(at.st_mode) && at.st_rdev ==
-			term && (fd = open(data, O_RDWR | O_NOCTTY)) != -1)
+	if (stat(data, &at) != -1 && S_ISCHR(at.st_mode) && at.st_rdev == term
+			&& (fd = open(data, O_RDWR | O_NOCTTY)) != -1)
+		return fd;
+	memcpy(data + 1, "/dev/tty", 9); /* rely on data[0] == '/' */
+	if (stat(data, &at) != -1 && S_ISCHR(at.st_mode) && at.st_rdev == term
+			&& (fd = open(data, O_RDWR | O_NOCTTY)) != -1)
 		return fd;
 	return -1;
 }
