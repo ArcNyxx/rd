@@ -58,8 +58,6 @@ die(const char *fmt, ...)
 static int
 getctty(void)
 {
-
-
 	int fd;
 	if ((fd = open("/proc/self/stat", O_RDONLY | O_NOFOLLOW)) == -1)
 		die("rd: unable to open file: ");
@@ -79,7 +77,7 @@ getctty(void)
 
 	dev_t term;
 	if ((term = strtoul(++ptr, NULL, 10)) == 0) /* also parsing error */
-		die("rd: process does not have controlling terminal\n");
+		die("rd: unable to find controlling terminal\n");
 
 	for (ret = minor(term) / 10, len = 0; ret > 0; ret /= 10, ++len);
 	ret = minor(term), num = len;
@@ -97,7 +95,7 @@ getctty(void)
 	if (stat(data, &at) != -1 && S_ISCHR(at.st_mode) && at.st_rdev ==
 			term && (fd = open(data, O_RDWR | O_NOCTTY)) != -1)
 		return fd;
-	die("rd: unable to find controlling terminal\n"); return -1;
+	return -1;
 }
 #endif /* TERM */
 
@@ -106,7 +104,8 @@ readpw(void)
 {
 	int fdin = STDIN_FILENO, fdout = STDERR_FILENO;
 #ifdef TERM
-	fdin = fdout = getctty();
+	if ((fdin = fdout = getctty()) == -1)
+		die("rd: unable to find controlling terminal\n");
 #endif /* TERM */
 
 	struct termios term;
